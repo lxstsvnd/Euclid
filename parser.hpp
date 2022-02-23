@@ -22,26 +22,12 @@ class Parsed_Tree //дерево разбора формулы
 	public:
 };
 
-class Analyzer_token //токен анализатора
-{
-	private:
-		std::string _nonterm; //нетерминальный символ
-		std::vector<Analyzer_token> _rule; //раскрытие символа
-		std::vector<Token> _connects; //связи с лексемами
-	public:
-		Analyzer_token();
-		~Analyzer_token();
-		void set_name(std::string name);
-		void set_rule(std::vector<Analyzer_token> rule);
-		void set_connects(std::vector<Token> connects);
-		std::vector<Analyzer_token> get_rule();
-		std::vector<Token> get_connects();
-};
-
 class Parser //парсер
 {
 	private:
 		std::vector<Token> _word;
+		std::vector<Token> _stack;
+
 	public:
 		Parser(std::vector<Token> word);
 		~Parser();

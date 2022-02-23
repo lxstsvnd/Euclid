@@ -4,8 +4,8 @@
 
 Tokenizer::Tokenizer(){;}
 Tokenizer::~Tokenizer(){_variables.clear();}
-void Tokenizer::add_variable(char symbol){_variables.push_back(symbol);}
-void Tokenizer::add_constant(int constant){_constants.push_back(constant);}
+void Tokenizer::add_variable(std::string symbol){_variables.push_back(symbol);}
+void Tokenizer::add_constant(std::string constant){_constants.push_back(constant);}
 bool Tokenizer::check_special(std::string special)
 {
 	if(special == "rightarrow" || special == "not" || special == "forall" || special == "exists" 
@@ -49,7 +49,7 @@ void Tokenizer::make_tokens(std::string input)
 		{
 			buffer.clear();
 			buffer.push_back(*iter);
-			add_variable(*iter);
+			add_variable(buffer);
 			add_token(buffer);
 			continue;
 		}
@@ -63,7 +63,7 @@ void Tokenizer::make_tokens(std::string input)
 			}
 			--iter;
 			add_token(buffer);
-			add_constant(std::stoi(buffer));
+			add_constant(buffer);
 			continue;
 		}
 		if(isother(*iter))
@@ -76,6 +76,6 @@ void Tokenizer::make_tokens(std::string input)
 		exit(3); //wrong symbols
 	}
 }
-std::vector<char> Tokenizer::get_variables(){return _variables;}
-std::vector<int> Tokenizer::get_constants(){return _constants;}
+std::vector<Token> Tokenizer::get_variables(){return _variables;}
+std::vector<Token> Tokenizer::get_constants(){return _constants;}
 std::vector<Token> Tokenizer::get_tokens(){return _tokens;}
