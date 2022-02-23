@@ -1,10 +1,14 @@
 all: euclid
-euclid: euclid.o lexer.o
-	g++ lexer.o euclid.o -o euclid
-tests.o: euclid.cpp
+euclid: euclid.o parser.o lexer.o token.o
+	g++ lexer.o parser.o euclid.o token.o -o euclid
+euclid.o: euclid.cpp
 	g++ -c euclid.cpp -o euclid.o
-stack.o: stack.cpp
+parser.o: parser.cpp
+	g++ -c parser.cpp -o parser.o
+lexer.o: lexer.cpp
 	g++ -c lexer.cpp -o lexer.o
+token.o: token.cpp
+	g++ -c token.cpp -o token.o
 clean:
 	rm -rf euclid. *.o
 

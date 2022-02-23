@@ -2,10 +2,6 @@
 #include <cstdio>
 #include <cstdlib>
 
-Token::Token(std::string token_name){_token_name = token_name;}
-Token::~Token(){_token_name.clear();}
-std::string Token::get_name(){return _token_name;}
-
 Tokenizer::Tokenizer(){;}
 Tokenizer::~Tokenizer(){_variables.clear();}
 void Tokenizer::add_variable(char symbol){_variables.push_back(symbol);}

@@ -1,16 +1,7 @@
+#include "token.hpp"
 #include <vector>
 #include <string>
 #include <cctype>
-
-class Token
-{
-	private:
-		std::string _token_name; //имя лексемы
-	public:
-		Token(std::string token_name);
-		~Token();
-		std::string get_name();
-};
 
 class Tokenizer
 {
