@@ -1,15 +1,24 @@
 #include "lexer.hpp"
 #include "parser.hpp"
+#include "iostream"
 
 int main()
 {
 	//лексический анализ
 	std::string input;
+	std::cin >> input;
 	Tokenizer lexer = Tokenizer();
 	lexer.make_tokens(input);
 	std::vector<Token> vars = lexer.get_variables();
 	std::vector<Token> consts = lexer.get_constants();
 	std::vector<Token> lexems = lexer.get_tokens();
+	for(int iter = 0; iter < lexems.size(); ++iter)
+	{
+		std::string buffer = lexems[iter].get_name();
+		for(int jter = 0; jter < buffer.size(); ++jter){printf("%c", buffer[jter]);}
+		printf("\n");
+	}
+	printf("\n");
 
 	//инициализация терминальных токенов, кроме var и const
 	Token lbrac = Token("(");
@@ -26,23 +35,23 @@ int main()
 	Token eps = Token("$");
 
 	//объявление нетерминальных токенов
-        Token Start = Token();
-	Token Form = Token();
-	Token Quantize = Token();
-	Token Quantor = Token();
-	Token Form1 = Token();
-	Token Brform = Token();
-	Token Imp = Token();
-	Token Neg = Token();
-	Token Expr = Token();
-	Token Expr1 = Token();
-	Token Sum = Token();
-	Token Mult = Token();
-	Token Mult1 = Token();
-	Token Var = Token();
-	Token Const = Token();
-	Token Arrow = Token();
-	Token Ord = Token();
+        Token Start = Token("START");
+	Token Form = Token("FORM");
+	Token Quantize = Token("QUANTIZE");
+	Token Quantor = Token("QUANTOR");
+	Token Form1 = Token("FORM1");
+	Token Brform = Token("BRFORM");
+	Token Imp = Token("IMP");
+	Token Neg = Token("NEG");
+	Token Expr = Token("EXPR");
+	Token Expr1 = Token("EXPR1");
+	Token Sum = Token("SUM");
+	Token Mult = Token("MULT");
+	Token Mult1 = Token("MULT1");
+	Token Var = Token("VAR");
+	Token Const = Token("CONST");
+	Token Arrow = Token("ARROW");
+	Token Ord = Token("ORD");
 
 	//заполнение полей нетерминальных токенов
 	std::vector<Token> buffer;
@@ -136,5 +145,7 @@ int main()
 	Ord.set_connects({geq});
 
 	//синтаксический анализ
-	
+	Parser analyzer = Parser(lexems, Start, eps);
+	bool if_parsed = analyzer.parse();
+	printf("%d\n", if_parsed);
 }
