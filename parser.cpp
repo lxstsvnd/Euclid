@@ -10,7 +10,7 @@ Node::~Node()
 void Node::add_child(Node* child_value){_children.push_back(child_value);}
 Node* Node::get_child(int child_position){return _children[child_position];}
 
-Parser::Parser(std::vector<Token> word, Token Start, Token eps)
+Parser::Parser(std::vector<Token> word, Token* Start)
 {
 	for(std::vector<Token>::iterator iter = --word.end(); iter != --word.begin(); --iter){_word.push_back(*iter);}
 	//_word.push_back(eps);
@@ -20,7 +20,6 @@ Parser::Parser(std::vector<Token> word, Token Start, Token eps)
 Parser::~Parser(){;} //Доделать
 bool Parser::parse()
 {
-	std::vector<Token>::iterator word_iter, stack_iter;
 	if(_word.empty()){return false;}
 	while(true)
 	{
@@ -33,7 +32,7 @@ bool Parser::parse()
                	printf("\n");
                	for(int iter = 0; iter < _stack.size(); ++iter)
                	{
-                       	std::string buffer = _stack[iter].get_name();
+                       	std::string buffer = _stack[iter]->get_name();
                        	for(int jter = 0; jter < buffer.size(); ++jter){printf("%c", buffer[jter]);}
                        	printf("\n");
                	}
@@ -41,23 +40,24 @@ bool Parser::parse()
 
 		//проверка на ошибки кончилась
 		if(_word.empty() && _stack.empty()){return true;}
-		word_iter = --_word.end();
-		stack_iter = --_stack.end();
-		if((*word_iter).get_name() == (*stack_iter).get_name())
+		int word_size = _word.size()-1;
+		int stack_size = _stack.size()-1;
+		if(_word[word_size].get_name() == _stack[stack_size]->get_name())
 		{
 			_word.pop_back();
 			_stack.pop_back();
 			continue;
 		}
-		if((*stack_iter).get_rules().empty())
+		if(_stack[stack_size]->get_name() == "$")
 		{
-			printf("SOSI HUY\n");
-			return false;
+			_stack.pop_back();
+			continue;
 		}
-		std::vector<Token> buffer = (*stack_iter).check_connects(*word_iter);
+		if((_stack[stack_size]->get_rules()).empty()) return false;
+		std::vector<Token*> buffer = _stack[stack_size]->check_connects(_word[word_size]);
 		if(buffer.empty()){return false;}
 		_stack.pop_back();
-		for(std::vector<Token>::iterator iter = --buffer.end(); iter != --buffer.begin(); --iter){_stack.push_back(*iter);}
+		for(int iter = buffer.size()-1; iter >=0; --iter){_stack.push_back(buffer[iter]);}
 		buffer.clear();
 	}
 }

@@ -26,9 +26,9 @@ class Parser //парсер
 {
 	private:
 		std::vector<Token> _word;
-		std::vector<Token> _stack;
+		std::vector<Token*> _stack;
 	public:
-		Parser(std::vector<Token> word, Token Start, Token eps);
+		Parser(std::vector<Token> word, Token* Start);
 		~Parser();
 		bool parse();
 };

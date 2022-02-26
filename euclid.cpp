@@ -12,140 +12,133 @@ int main()
 	std::vector<Token> vars = lexer.get_variables();
 	std::vector<Token> consts = lexer.get_constants();
 	std::vector<Token> lexems = lexer.get_tokens();
-	for(int iter = 0; iter < lexems.size(); ++iter)
-	{
-		std::string buffer = lexems[iter].get_name();
-		for(int jter = 0; jter < buffer.size(); ++jter){printf("%c", buffer[jter]);}
-		printf("\n");
-	}
-	printf("\n");
 
 	//инициализация терминальных токенов, кроме var и const
-	Token lbrac = Token("(");
-	Token rbrac = Token(")");
-	Token forall = Token("forall");
-	Token exists = Token("exists");
-	Token reduct = Token("not");
-	Token great = Token(">");
-	Token equal = Token("=");
-	Token geq = Token("geq");
-	Token plus = Token("+");
-	Token mult = Token("mult");
-	Token arrow = Token("rightarrow");
-	Token eps = Token("$");
+	Token* lbrac = new Token("(");
+	Token* rbrac = new Token(")");
+	Token* forall = new Token("forall");
+	Token* exists = new Token("exists");
+	Token* reduct = new Token("not");
+	Token* great = new Token(">");
+	Token* equal = new Token("=");
+	Token* geq = new Token("geq");
+	Token* plus = new Token("+");
+	Token* mult = new Token("mult");
+	Token* arrow = new Token("rightarrow");
+	Token* eps = new Token("$");
 
 	//объявление нетерминальных токенов
-        Token Start = Token("START");
-	Token Form = Token("FORM");
-	Token Quantize = Token("QUANTIZE");
-	Token Quantor = Token("QUANTOR");
-	Token Form1 = Token("FORM1");
-	Token Brform = Token("BRFORM");
-	Token Imp = Token("IMP");
-	Token Neg = Token("NEG");
-	Token Expr = Token("EXPR");
-	Token Expr1 = Token("EXPR1");
-	Token Sum = Token("SUM");
-	Token Mult = Token("MULT");
-	Token Mult1 = Token("MULT1");
-	Token Var = Token("VAR");
-	Token Const = Token("CONST");
-	Token Arrow = Token("ARROW");
-	Token Ord = Token("ORD");
+        Token* Start = new Token("START");
+	Token* Form = new Token("FORM");
+	Token* Quantize = new Token("QUANTIZE");
+	Token* Quantor = new Token("QUANTOR");
+	Token* Form1 = new Token("FORM1");
+	Token* Brform = new Token("BRFORM");
+	Token* Imp = new Token("IMP");
+	Token* Neg = new Token("NEG");
+	Token* Expr = new Token("EXPR");
+	Token* Expr1 = new Token("EXPR1");
+	Token* Sum = new Token("SUM");
+	Token* Mult = new Token("MULT");
+	Token* Mult1 = new Token("MULT1");
+	Token* Var = new Token("VAR");
+	Token* Const = new Token("CONST");
+	Token* Arrow = new Token("ARROW");
+	Token* Ord = new Token("ORD");
 
 	//заполнение полей нетерминальных токенов
-	std::vector<Token> buffer;
+	std::vector<Token*> buffer;
 
-	Start.set_rule({Form});
-	Start.set_connects({forall, exists, lbrac});
+	Start->set_rule({Form});
+	Start->set_connects({forall, exists, lbrac});
 
-	Form.set_rule({Quantize, Form1});
-	Form.set_connects({forall, exists, lbrac});
+	Form->set_rule({Quantize, Form1});
+	Form->set_connects({forall, exists, lbrac});
 
-	Quantize.set_rule({Quantor, Form1});
-	Quantize.set_rule({eps});
-	Quantize.set_connects({{forall, exists}});
-	Quantize.set_connects({lbrac});
+	Quantize->set_rule({Quantor, Quantize});
+	Quantize->set_rule({eps});
+	Quantize->set_connects({{forall, exists}});
+	Quantize->set_connects({lbrac});
 
-	Quantor.set_rule({forall, Var});
-	Quantor.set_rule({exists, Var});
-	Quantor.set_connects({forall});
-	Quantor.set_connects({exists});
+	Quantor->set_rule({forall, Var});
+	Quantor->set_rule({exists, Var});
+	Quantor->set_connects({forall});
+	Quantor->set_connects({exists});
 
-	Form1.set_rule({lbrac, Brform});
-	Form1.set_connects({lbrac});
+	Form1->set_rule({lbrac, Brform});
+	Form1->set_connects({lbrac});
 
-	Brform.set_rule({Expr});
-	Brform.set_rule({Imp});
-	Brform.set_rule({Neg});
-	for(std::vector<Token>::iterator iter = vars.begin(); iter != vars.end(); ++iter){buffer.push_back(*iter);}
-	for(std::vector<Token>::iterator iter = consts.begin(); iter != consts.end(); ++iter){buffer.push_back(*iter);}
-	Brform.set_connects(buffer);
-	Brform.set_connects({forall, exists, lbrac});
-	Brform.set_connects({reduct});
+	Brform->set_rule({Expr});
+	Brform->set_rule({Imp});
+	Brform->set_rule({Neg});
+	for(int iter = 0; iter < vars.size(); ++iter){buffer.push_back(&vars[iter]);}
+	for(int iter = 0; iter < consts.size(); ++iter){buffer.push_back(&consts[iter]);}
+	Brform->set_connects(buffer);
+	Brform->set_connects({forall, exists, lbrac});
+	Brform->set_connects({reduct});
 	buffer.clear();
 
-	Imp.set_rule({Form, Arrow, Form, rbrac});
-	Imp.set_connects({forall, exists, lbrac});
+	Imp->set_rule({Form, Arrow, Form, rbrac});
+	Imp->set_connects({forall, exists, lbrac});
 
-	Neg.set_rule({reduct, Form, rbrac});
-	Neg.set_connects({reduct});
+	Neg->set_rule({reduct, Form, rbrac});
+	Neg->set_connects({reduct});
 
-	Expr.set_rule({Expr1, Ord, Expr1, rbrac});
-	for(std::vector<Token>::iterator iter = vars.begin(); iter != vars.end(); ++iter){buffer.push_back(*iter);}
-	for(std::vector<Token>::iterator iter = consts.begin(); iter != consts.end(); ++iter){buffer.push_back(*iter);}
-	Expr.set_connects(buffer);
+	Expr->set_rule({Expr1, Ord, Expr1, rbrac});
+	for(int iter = 0; iter < vars.size(); ++iter){buffer.push_back(&vars[iter]);}
+	for(int iter = 0; iter < consts.size(); ++iter){buffer.push_back(&consts[iter]);}
+	Expr->set_connects(buffer);
 	buffer.clear();
 
-	Expr1.set_rule({Mult, Sum});
-	for(std::vector<Token>::iterator iter = vars.begin(); iter != vars.end(); ++iter){buffer.push_back(*iter);}
-	for(std::vector<Token>::iterator iter = consts.begin(); iter != consts.end(); ++iter){buffer.push_back(*iter);}
-	Expr1.set_connects(buffer);
+	Expr1->set_rule({Mult, Sum});
+	for(int iter = 0; iter < vars.size(); ++iter){buffer.push_back(&vars[iter]);}
+	for(int iter = 0; iter < consts.size(); ++iter){buffer.push_back(&consts[iter]);}
+	Expr1->set_connects(buffer);
 	buffer.clear();
 
-	Sum.set_rule({plus, Expr1});
-	Sum.set_rule({eps});
-	Sum.set_connects({plus});
-	Sum.set_connects({rbrac, great, equal, geq});
+	Sum->set_rule({plus, Expr1});
+	Sum->set_rule({eps});
+	Sum->set_connects({plus});
+	Sum->set_connects({rbrac, great, equal, geq});
 	
-	Mult.set_rule({Var, Mult1});
-	Mult.set_rule({Const, Mult1});
-	for(std::vector<Token>::iterator iter = vars.begin(); iter != vars.end(); ++iter){buffer.push_back(*iter);}
-	Mult.set_connects(buffer);
+	Mult->set_rule({Var, Mult1});
+	Mult->set_rule({Const, Mult1});
+	for(int iter = 0; iter < vars.size(); ++iter){buffer.push_back(&vars[iter]);}
+	Mult->set_connects(buffer);
 	buffer.clear();
-	for(std::vector<Token>::iterator iter = consts.begin(); iter != consts.end(); ++iter){buffer.push_back(*iter);}
-	Mult.set_connects(buffer);
+	for(int iter = 0; iter < consts.size(); ++iter){buffer.push_back(&consts[iter]);}
+	Mult->set_connects(buffer);
 	buffer.clear();
 
-	Mult1.set_rule({mult, Mult});
-	Mult1.set_rule({eps});
-	Mult1.set_connects({mult});
-	Mult1.set_connects({rbrac, plus, great, equal, geq});
+	Mult1->set_rule({mult, Mult});
+	Mult1->set_rule({eps});
+	Mult1->set_connects({mult});
+	Mult1->set_connects({rbrac, plus, great, equal, geq});
 
-	for(std::vector<Token>::iterator iter = vars.begin(); iter != vars.end(); ++iter)
+	for(int iter = 0; iter < vars.size(); ++iter)
 	{
-		Var.set_rule({*iter});
-		Var.set_connects({*iter});
+		Var->set_rule({&vars[iter]});
+		Var->set_connects({&vars[iter]});
 	}
 
-	for(std::vector<Token>::iterator iter = consts.begin(); iter != consts.end(); ++iter)
+	for(int iter = 0; iter < consts.size(); ++iter)
 	{
-		Const.set_rule({*iter});
-		Const.set_connects({*iter});
+		Const->set_rule({&consts[iter]});
+		Const->set_connects({&consts[iter]});
 	}
 
-	Arrow.set_rule({arrow});
-	Arrow.set_connects({arrow});
+	Arrow->set_rule({arrow});
+	Arrow->set_connects({arrow});
 
-	Ord.set_rule({great});
-	Ord.set_rule({equal});
-	Ord.set_rule({geq});
-	Ord.set_connects({great});
-	Ord.set_connects({equal});
-	Ord.set_connects({geq});
+	Ord->set_rule({great});
+	Ord->set_rule({equal});
+	Ord->set_rule({geq});
+	Ord->set_connects({great});
+	Ord->set_connects({equal});
+	Ord->set_connects({geq});
 
 	//синтаксический анализ
-	Parser analyzer = Parser(lexems, Start, eps);
+	Parser analyzer = Parser(lexems, Start);
 	bool if_parsed = analyzer.parse();
 	printf("%d\n", if_parsed);
 }
