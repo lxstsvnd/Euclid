@@ -21,5 +21,5 @@ class Token
 		std::vector<std::vector<Token*>> get_rules();
 		std::vector<std::vector<Token*>> get_connects();
 		std::vector<Token*> check_connects(Token lexem); //поиск пересечения правила вывода и терминала в таблице. Возвращается раскрытие нетерминала.
-
+		bool check_name();
 };

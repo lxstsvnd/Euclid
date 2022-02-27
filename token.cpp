@@ -20,3 +20,10 @@ std::vector<Token*> Token::check_connects(Token lexem)
 	}
 	return {};
 }
+bool Token::check_name()
+{
+	if(_name == "(" || _name == ")" || _name == "forall" || _name == "exists" || _name == "not" || _name == ">"
+			|| _name == "=" || _name == "geq" || _name == "+" || _name == "*"
+			|| _name == "rightarrow" || _name == "$") return 0;
+	return 1;
+}

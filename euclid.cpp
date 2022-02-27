@@ -23,7 +23,7 @@ int main()
 	Token* equal = new Token("=");
 	Token* geq = new Token("geq");
 	Token* plus = new Token("+");
-	Token* mult = new Token("mult");
+	Token* mult = new Token("*");
 	Token* arrow = new Token("rightarrow");
 	Token* eps = new Token("$");
 
