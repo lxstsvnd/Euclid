@@ -1,81 +1,136 @@
 #include "lexer.hpp"
-#include <cstdio>
-#include <cstdlib>
 
-Tokenizer::Tokenizer(){;}
-Tokenizer::~Tokenizer(){_variables.clear();}
-void Tokenizer::add_variable(std::string symbol){_variables.push_back(symbol);}
-void Tokenizer::add_constant(std::string constant){_constants.push_back(constant);}
-bool Tokenizer::check_special(std::string special)
+namespace dnf_parser
 {
-	if(special == "rightarrow" || special == "not" || special == "forall" || special == "exists" 
-			|| special == "geq") return true;
-	return false;
-}
-bool Tokenizer::isother(char symbol)
-{
-	if(symbol == '(' || symbol == ')' || symbol == '+' || symbol == '*' || symbol == '='
-			|| symbol == '>') return true;
-	return false;
-}
-void Tokenizer::add_token(std::string token_name){_tokens.push_back(Token(token_name));}
-void Tokenizer::make_tokens(std::string input)
-{
-	std::string buffer;
-	for(std::string::iterator iter = input.begin(); iter != input.end(); ++iter)
+	Tokenizer::Tokenizer(const std::string& Line) //строка разбирается в конструкторе
 	{
-		if(isspace(*iter)) continue; //пробельные символы игнорируются
-		if(*iter == '\\') //токенизация спецсимвола
+		for(char cCh : Line) //cCh = current character
 		{
-			buffer.clear();
-			++iter;
-			if(iter == input.end()) exit(1); //бекслеш в конце строки
-			while(*iter != '\\')
+			if(_cToken.mType == SPECIAL_SEQUENCE)
 			{
-				if(isspace(*iter))
+				switch(cCh)
 				{
-					++iter;
-					continue;
+					case 'd': //дизъюнкция
+						_cToken.mText.push_back('d');
+						_cToken.mType = DISJOINT;
+						break;
+					case 'c': //конъюнкция
+						_cToken.mText.push_back('c');
+						_cToken.mType = CONJUNCT;
+						break;
+					case 'n': //отрицание
+						_cToken.mText.push_back('n');
+						_cToken.mType = RESISTANCE;
+						break;
+					default: //ошибка по умолчанию
+						throw std::runtime_error("uknkown special symbol!");
+						break;
 				}
-				buffer.push_back(*iter);
-				++iter;
-				if(iter == input.end()) exit(1); //бекслеш в конце строки
+				endToken();
+				continue;
 			}
-			if(!check_special(buffer)) exit(2); //неправильно введен спецсимвол
-			add_token(buffer);
-			continue;
-		}
-		if(islower(*iter))
-		{
-			buffer.clear();
-			buffer.push_back(*iter);
-			add_variable(buffer);
-			add_token(buffer);
-			continue;
-		}
-		if(isdigit(*iter))
-		{
-			buffer.clear();
-			while(isdigit(*iter))
+
+			switch(cCh)
 			{
-				buffer.push_back(*iter);
-				++iter;
+				case '0':
+				case '1':
+				case '2':
+				case '3':
+				case '4':
+				case '5':
+				case '6':
+				case '7':
+				case '8':
+				case '9':
+					if(_cToken.mType == WHITESPACE || _cToken.mType == INTEGER_LITERAL)
+					{
+						_cToken.mType = INTEGER_LITERAL;
+						_cToken.mText.push_back(cCh);
+					}else{throw std::runtime_error("0-9 is not in integer literal");}
+					break;
+
+				case '\\': //выловлено начало спецсимвола
+					if(!_cToken.mText.empty()){endToken();}
+					_cToken.mType = SPECIAL_SEQUENCE;
+					break;
+
+				case '(':
+					if(!_cToken.mText.empty()){endToken();}
+					_cToken.mType = LBRAC;
+					_cToken.mText.push_back('(');
+					endToken();
+					break;
+				case ')':
+					if(!_cToken.mText.empty()){endToken();}
+					_cToken.mType = RBRAC;
+					_cToken.mText.push_back(')');
+					endToken();
+					break;
+				case '+':
+					if(!_cToken.mText.empty()){endToken();}
+					_cToken.mType = PLUS;
+					_cToken.mText.push_back('+');
+					endToken();
+					break;
+				case '*':
+					if(!_cToken.mText.empty()){endToken();}
+					_cToken.mType = MULTIPLY;
+					_cToken.mText.push_back('*');
+					endToken();
+					break;
+				case '^':
+					if(!_cToken.mText.empty()){endToken();}
+					_cToken.mType = POWER;
+					_cToken.mText.push_back('^');
+					endToken();
+					break;
+				case '=':
+					if(!_cToken.mText.empty()){endToken();}
+					_cToken.mType = EQUAL;
+					_cToken.mText.push_back('=');
+					endToken();
+					break;
+				case '>':
+					if(!_cToken.mText.empty()){endToken();}
+					_cToken.mType = GREATER;
+					_cToken.mText.push_back('>');
+					endToken();
+					break;
+				case 'x':
+					if(!_cToken.mText.empty()){endToken();}
+					_cToken.mType = IDENTIFIER;
+					_cToken.mText.push_back('x');
+					endToken();
+					_cToken.mType = IDENTIFIER;
+					break;
+				case '-': //x-c -> [x] [+] [-c]
+					if(_cToken.mType != WHITESPACE)
+					{
+						if(!_cToken.mText.empty()){endToken();}
+						_cToken.mType = PLUS;
+						_cToken.mText.push_back('+');
+						endToken();
+					}
+					_cToken.mType = INTEGER_LITERAL;
+					_cToken.mText.push_back('-');
+					break;
+				default:
+					throw std::runtime_error("unknown symbol!");
+					break;
 			}
-			--iter;
-			add_token(buffer);
-			add_constant(buffer);
-			continue;
 		}
-		if(isother(*iter))
-		{
-			buffer.clear();
-			buffer.push_back(*iter);
-			add_token(buffer);
-			continue;
-		}
-		exit(3); //wrong symbols
+		endToken();
+	}
+
+	void Tokenizer::endToken()
+	{
+		if(_cToken.mType != WHITESPACE){_tokens.push_back(_cToken);}
+		_cToken.mType = WHITESPACE;
+		_cToken.mText.erase();
+	}
+
+	void Tokenizer::debugPrint()
+	{
+		for(Token cTok : _tokens){std::cout << "Type: " << sTokenTypeStrings[cTok.mType] << " Name: " << cTok.mText << std::endl;}
 	}
 }
-std::vector<Token> Tokenizer::get_variables(){return _variables;}
-std::vector<Token> Tokenizer::get_constants(){return _constants;}
-std::vector<Token> Tokenizer::get_tokens(){return _tokens;}

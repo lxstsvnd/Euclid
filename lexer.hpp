@@ -1,24 +1,66 @@
-#include "token.hpp"
+#pragma once
+
 #include <vector>
 #include <string>
-#include <cctype>
+#include <stdexcept>
+#include <iostream>
 
-class Tokenizer
+namespace dnf_parser
 {
-	private:
-		std::vector<Token> _tokens;
-		std::vector<Token> _variables; //имена переменных (нужно для анализатора)
-		std::vector<Token> _constants; //значения констант (нужно для анализатора)
-	public:
-		Tokenizer();
-		~Tokenizer();
-		void make_tokens(std::string input); //лексический анализ строки
-		std::vector<Token> get_variables();
-		std::vector<Token> get_constants();
-		std::vector<Token> get_tokens();
-		void add_variable(std::string symbol);
-		void add_constant(std::string constant);
-		void add_token(std::string token_name);
-		bool check_special(std::string special); //проверка строки на соответствие спецсимволу
-		bool isother(char symbol); //проверка символа на скобку, арифметический оператор или оператор порядка
-};
+	enum TokenType //объявление токенов
+	{
+		WHITESPACE, //служебный токен (нет в токенизированной строке)
+		IDENTIFIER, //переменная
+		INTEGER_LITERAL, //целое число
+		SPECIAL_SEQUENCE, //служебный (для записи всех спецсимволов)
+		DISJOINT, //дизъюнкция
+		CONJUNCT, //конъюнкция
+		RESISTANCE, //отрицание
+		POWER, //степень
+		LBRAC, //скобки//
+		RBRAC, //      //
+		PLUS,
+		MULTIPLY,
+		EQUAL,
+		GREATER
+	};
+
+	static const char* sTokenTypeStrings[] =
+	{
+		"WHITESPACE",
+		"IDENTIFIER",
+		"INTEGER_LITERAL",
+		"SPECIAL_SEQUENCE",
+		"DISJOINT",
+		"CONJUNCT",
+		"RESISTANCE",
+		"POWER",
+		"LBRAC",
+		"RBRAC",
+		"PLUS",
+		"MULTIPLY",
+		"EQUAL",
+		"GREATER"
+	};
+	
+	class Token
+	{
+		private:
+		public:
+			enum TokenType mType{WHITESPACE}; //тип токена
+			std::string mText; //текст в токене
+
+	};
+
+	class Tokenizer
+	{
+		private:
+			Token _cToken; //текущий токен
+			std::vector<Token> _tokens; //токенизированный ввод
+			void endToken(); //добавление токена в вектор после обработки
+		public:
+			Tokenizer(const std::string& Line); //токенизация ввода
+			std::vector<Token> get_tokens() const; //возврат токенизированного ввода
+			void debugPrint();
+	};
+}
