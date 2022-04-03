@@ -165,7 +165,15 @@ std::vector<Polynom> mod_saturation(std::vector<Polynom> unsaturated)
 						std::cout<<"the result is :"<<std::endl;
 						C=divide(unsaturated[i],unsaturated[j]).first;
 						if(C.get_degree()>0)
+						{
 							raw_polynoms.push_back(C);
+							//also should add -C for j/i
+							std::vector<mpz_class> negative_c=C.get_coefficients();
+							for(int k=0;k<negative_c.size();k++)
+								negative_c[k]=-negative_c[k];
+							raw_polynoms.push_back(Polynom(negative_c));
+
+						}
 						C.print();
 //						if(unsaturated[i].get_degree()==unsaturated[j].get_degree())
 //							C=C.divide(unsaturated[j],unsaturated[i]).first;
@@ -285,6 +293,8 @@ void degree_sort(std::vector<Polynom>& unsorted)
 	}
 		
 }
+
+void row_print(std::vector<std::vector<int>> t, std::vector<Polynom> polynoms);
 //maybe optimizing for first and second polynom order
 std::vector<std::vector<int>> tars_table(std::vector<Polynom> polynoms)
 {
@@ -293,7 +303,6 @@ std::vector<std::vector<int>> tars_table(std::vector<Polynom> polynoms)
 	std::vector<std::vector<int>> t;//table
 	//sorting polynoms by degree
 	std::cout<<"end of the world"<<std::endl;
-//	degree_sort(polynoms);
 	//first iteration for linear polynom
 	//std::cout<<"END OF THE WORLD"<<std::endl;
 	std::vector<int> first_column(3);
@@ -306,35 +315,48 @@ std::vector<std::vector<int>> tars_table(std::vector<Polynom> polynoms)
 	first_column[1]=0;
 	first_column[2]=sign;
 	t.push_back(first_column);
-	
+	row_print(t,polynoms);
 	//main inductive cycle
 	for(int p=1;p<polynoms.size();p++)
 	{
+		std::cout<<std::endl<<std::endl<<"NEW ITERATION"<<std::endl;
+		std::cout<<"adding polynom ";
+		polynoms[p].print();
+		std::cout<<std::endl;
+
 		std::vector<int> new_roots;//places for new roots
+		std::vector<int> new_roots_temp;
 		//adding new column to table with -inf and +inf point
 		std::vector<int> new_column(t[0].size());
 		for(int i=0;i<t[0].size();i++)
 			new_column[i]=-1000;
 		std::vector<mpz_class> p_coef=polynoms[p].get_coefficients();
-		mpz_class sign_mpz=first_p_coef[1]/abs(first_p_coef[1]);
-		if((polynoms[p].get_degree() % 2)==0)//if even
+		mpz_class sign_mpz=p_coef[p_coef.size()-1]/abs(p_coef[p_coef.size()-1]);
+//		std::cout<<"sign of "<<p<<"polynom is "<<sign_mpz.get_d()<<std::endl;
+//		std::cout<<"deg of polynom "<<p<<" is "<<polynoms[p].get_degree()<<std::endl; 
+		if((polynoms[p].get_degree() % 2)==0)//if not even
 		{
-			new_column[0]=sign_mpz.get_ui();
-			new_column[t[0].size()-1]=sign_mpz.get_ui();
+			new_column[0]=sign_mpz.get_d();
+			new_column[t[0].size()-1]=sign_mpz.get_d();
 		}
-		if((polynoms[p].get_degree() % 2)==1)
+		if((polynoms[p].get_degree() % 2)==1)//if even
 		{
-			new_column[0]=sign_mpz.get_ui()*(-1);
-			new_column[t[0].size()-1]=sign_mpz.get_ui();
+			new_column[0]=sign_mpz.get_d()*(-1);
+			new_column[t[0].size()-1]=sign_mpz.get_d();
 		}
 
 		t.push_back(new_column);
+		std::cout<<"t size is "<<t.size()<<std::endl;
 
 		//iteration on roots
 		for(int i=1;i<t[0].size();i+=2)
 		{
 			int sign=-1000;
 			int l=0;
+			std::vector<mpz_class> divider_coefficients{-1000};
+			mpz_class divider_elder_coefficient=0;
+			mpz_class divider_coeff_sign=-1000;
+			mpz_class divider_coeff_sign_old=-1000;
 			//need to find polynom with zero on i
 			for(int j=0;j<t.size();j++)
 			{
@@ -345,10 +367,23 @@ std::vector<std::vector<int>> tars_table(std::vector<Polynom> polynoms)
 					break;		
 				}
 			}
+			//getting sign of powered elder coefficient
+			divider_coefficients=polynoms[l].get_coefficients();
+			divider_elder_coefficient=divider_coefficients[divider_coefficients.size()-1];
+			divider_coeff_sign=divider_elder_coefficient/abs(divider_elder_coefficient);
+			divider_coeff_sign_old=divider_coeff_sign;
+			for(int j=0;j<polynoms[p].get_degree()-polynoms[l].get_degree();j++)
+				divider_coeff_sign*=divider_coeff_sign_old;
+
+			//printing polynoms
+			polynoms[p].print();
+			std::cout<<std::endl;
+			polynoms[l].print();
 			//l is number of polynom which have 0 on i place
-			Polynom rem = divide(polynoms[i],polynoms[l]).first;
+			Polynom rem = divide(polynoms[p],polynoms[l]).first;
 			std::cout<<"remainder is ";
 			rem.print();
+			std::cout<<std::endl;
 			std::cout<<"remainder's degree is "<<rem.get_degree()<<std::endl;
 			std::cout<<std::endl;
 			//if reminder is actually a polynom, not a constant
@@ -365,8 +400,14 @@ std::vector<std::vector<int>> tars_table(std::vector<Polynom> polynoms)
 			//case if reminder is a constant
 			if(rem.get_degree()==0)
 			{
-				mpz_class mpz_sign=rem.get_coefficients()[0]/abs(rem.get_coefficients()[0]);
-				t[p][i]=mpz_sign.get_ui();
+				if(rem.get_coefficients()[0]==0)
+					t[p][i]=0;
+				if(rem.get_coefficients()[0]!=0)
+				{
+					mpz_class remnant_coeff_sign=rem.get_coefficients()[0]/abs(rem.get_coefficients()[0]);
+					mpz_class modified_elder_coeff_sign=remnant_coeff_sign*divider_coeff_sign;
+					t[p][i]=(int)modified_elder_coeff_sign.get_d();
+				}
 			}
 		}
 
@@ -376,23 +417,120 @@ std::vector<std::vector<int>> tars_table(std::vector<Polynom> polynoms)
 		if(p!=1)//need to make this thing better
 			for(int i=1;i<t[0].size()-3;i+=2)
 			{
-				t[p][i+1]=t[p][i];	
+				if(t[p][i]==-1000)
+				{
+					t[p][i+1]=-2000;
+					continue;
+				}
+				if(t[p][i]!=0)
+				{
+					t[p][i+1]=t[p][i];
+					continue;
+				}
+				if(t[p][i]==0)
+				{
+					t[p][i+1]=t[p][i+2];
+					continue;
+				}
+				if(t[p][i+2]==0)
+				{
+					t[p][i+1]=0;
+					continue;
+				}
 			}
-		
+
 		//adding new roots
 		//1.finding new roots
 		//need to iterate through last line and collect occasiong -1|+1 in new_roots vector
 		for(int i = 1;i<t[0].size();i++)
 			if(t[p][i]==t[p][i-1]*(-1))
 				new_roots.push_back(i-1);
-
+		//lets look on last row
+		std::cout<<"Last row is";
+		for(int i = 0;i < t[p].size();i++)
+			std::cout<<t[p][i]<<"|";
+		std::cout<<std::endl;
 		std::cout<<"new roots are";
 		if(new_roots.size()==0)
 			std::cout<<"there is no new roots"<<std::endl;
 		for(int i=0;i<new_roots.size();i++)
 			std::cout<<new_roots[i]<<" ";
 		std::cout<<std::endl;
-	//}
+		
+
+		
+		//2.making new columns
+		new_roots_temp=new_roots;
+		//iteration through all previous polynoms
+		for(int i=0;i<t.size()-1;i++)
+		{
+			//iterating through new roots
+			for(int j=0;j<new_roots.size();j++)
+			{
+				auto it=t[i].begin();
+				it += new_roots[j]+1;
+				int prev=t[i][new_roots[j]];
+				int next=t[i][new_roots[j]+1];
+				if(prev!=0)//if left is not 0
+					it=t[i].insert(it,{prev,prev});
+				if(prev==0)//if left is 0
+				{
+					if(next!=0)//if left is 0 but right is not
+						it=t[i].insert(it,{next,next});
+					if(next==0)//if both left and right 0
+						it=t[i].insert(it,{0,0});
+				}
+				for(int k=j+1;k<new_roots.size();k++)
+					new_roots[k]+=2;
+			}
+			//shifting remain roots
+			new_roots=new_roots_temp;
+			
+		}
+		//check if iteration was correct
+		new_roots=new_roots_temp;
+		std::cout<<"previous polynoms redacted, now work with new polynom"<<std::endl;
+		std::cout<<"new roots are";
+		if(new_roots.size()==0)
+			std::cout<<"there is no new roots"<<std::endl;
+		for(int i=0;i<new_roots.size();i++)
+			std::cout<<new_roots[i]<<" ";
+		std::cout<<std::endl;
+		std::cout<<"table is now"<<std::endl;
+		row_print(t,polynoms);
+		//iteration through new polynom
+		for(int j=0;j<new_roots.size();j++)
+		{
+			auto it=t[p].begin();
+			it += new_roots[j]+1;
+			int prev=t[p][new_roots[j]];
+			int next=t[p][new_roots[j]+1];
+			if((new_roots[j] % 2)==0)//conflict on interval-point => 0|+
+				it=t[p].insert(it,{0,next});
+			if((new_roots[j] % 2)==1)//conflict on point-interval=> +|0
+				it=t[p].insert(it,{prev,0});
+			for(int k=j+1;k<new_roots.size();k++)
+				new_roots[k]+=2;
+		}
+
+		row_print(t,polynoms);
 	}
 	return t;
+}
+
+void row_print(std::vector<std::vector<int>> t, std::vector<Polynom> polynoms)
+{
+	std::cout<<"Printing talbe..."<<std::endl;
+	for(int j=0;j<t.size();j++)
+	{
+		std::cout<<"__________"<<std::endl;
+		std::cout<<"["<<j<<"] = ";
+		polynoms[j].print();
+		std::cout<<" |";
+		for(int i=0;i<t[j].size();i++)
+			std::cout<<t[j][i]<<" |";
+		std::cout<<std::endl;
+		std::cout<<"__________"<<std::endl;
+	}
+	std::cout<<"Table ended..."<<std::endl;
 }

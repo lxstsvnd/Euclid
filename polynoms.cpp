@@ -132,7 +132,7 @@ std::pair<Polynom, Polynom> divide(Polynom Pdivident, Polynom Pdivider)
 //		std::cout<<"deduct:"<<std::endl;
 //		for (int i = 0; i < deduct.size() ;i++)
 //			std::cout<<i<<":"<<deduct[i]<<std::endl;
-//
+
 		for(int i = 0; i < remainder.size();i++)
 		{
 			temp_quotient.push_back(remainder[i]-deduct[i]);
