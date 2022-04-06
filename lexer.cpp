@@ -2,6 +2,9 @@
 
 namespace dnf_parser
 {
+	Token::Token(enum TokenType type){mType = type;}
+	Token::Token(){;}
+
 	Tokenizer::Tokenizer(const std::string& Line) //строка разбирается в конструкторе
 	{
 		for(char cCh : Line) //cCh = current character
@@ -121,6 +124,8 @@ namespace dnf_parser
 		}
 		endToken();
 	}
+
+	std::vector<Token> Tokenizer::get_tokens(){return _tokens;}
 
 	void Tokenizer::endToken()
 	{
