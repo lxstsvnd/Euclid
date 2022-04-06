@@ -1,34 +1,35 @@
-#include <vector>
-#include <string>
-#include "token.hpp"
+#pragma once
 
-class Node //Вершина дерева разбора
+#include "lexer.hpp"
+
+namespace dnf_parser
 {
-	private:
-		Token* _value;
-		std::vector<Node*> _children; //указатели на потомков
-		int _nonterm; //статус (1, если нетерминал)
-	public:
-		Node();
-		Node(Token* value);
-		~Node();
-		void set_value(Token* value);
-		void set_status(int stat);
-		Token* get_value();
-		void add_child(Node* child);
-};
+	class Node
+	{
+		private:
+			std::vector<const Node*> _chPtr; //указатели на потомков вершины
+		public:
+			enum TokenType mType{WHITESPACE}; //тип вершины дерева
+			std::string mText; //текст в токене (мб бесполезно)
+			bool mTerm; //1, если терминал
+			Node(int isTerm, enum TokenType type);
+			Node();
+			std::vector<const Node*> getChildren() const; //получить потомков вершины
+			void addChild(const Node& addedNode); //добавить потомка
+	};
 
-class Parser //парсер
-{
-	private:
-		std::vector<Token> _word;
-		std::vector<Token*> _stack;
-		Node* _root;
-		std::vector<Node*> _current;
-		void reveal_current(std::vector<Token*> tokens);
-	public:
-		Parser(std::vector<Token> word, Token* Start);
-		~Parser();
-		bool parse();
-
-};
+	class parseTree
+	{
+		private:
+			Node* _root;
+			Node* _upperNode; //текущий раскрываемый нетерминал
+			std::vector<Token> _Line; //разбираемая последовательность терминалов
+			void _getUpperNode(const Node* toNode); //поиск верхнего в стеке нетерминала
+			void _addNode(const Node& addedNode); //замена раскрытого нетерминала
+			bool _ifMatched(Node* nTerm, Token Term); //анализ LL-таблицы
+		public:
+			parseTree(const std::vector<Token>& Line);
+			void getUpperNode(); //обновление текущего вызываемого нетерминала
+			void parse(); //парсинг вектора токенов
+	};
+}
