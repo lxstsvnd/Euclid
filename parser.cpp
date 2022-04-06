@@ -6,6 +6,7 @@ namespace dnf_parser
 	{
 		mType = type;
 		mTerm = isTerm;
+		_chPtr.clear();
 	}
 	Node::Node(){;}
 	std::vector<const Node*> Node::getChildren() const{return _chPtr;}
@@ -18,12 +19,11 @@ namespace dnf_parser
 		{
 			if(!bufNode->mTerm && bufNode->getChildren().empty())
 			{
-				printf("found!\n");
 				_upperNode = (Node*)bufNode;
+				std::cout << "hm: " << sTokenTypeStrings[toNode->getChildren()[0]->mType] << std::endl;
 				return;
 			}else if(!bufNode->mTerm && !bufNode->getChildren().empty())
 			{
-				printf("anyway!\n");
 				_getUpperNode(bufNode);
 				return;
 			}
@@ -37,32 +37,43 @@ namespace dnf_parser
 		_Line.push_back(Token(END)); //добавляем указатель на конец строки
 		_root = new Node(0, BLACKSPACE); //корень изначально рабочий нетерминал
 	}
-	void parseTree::getUpperNode()
-	{
-		printf("getting upper!\n");
-		_getUpperNode(_root);
-	}
+	void parseTree::getUpperNode(){_getUpperNode(_root);}
 	void parseTree::_addNode(const Node& addedNode){_upperNode->addChild(addedNode);}
 	void parseTree::parse()
 	{
-		printf("In parse!\n");
 		for(const Token cToken : _Line)
 		{
-			getUpperNode();
-			const int flag = _ifMatched(_upperNode, cToken);
-			if(!flag){throw std::runtime_error("Syntax error!");}
+			while(true)
+			{
+				getUpperNode();
+				std::cout << sTokenTypeStrings[_upperNode->mType] << " " << sTokenTypeStrings[cToken.mType] << std::endl;
+				int flag = _ifMatched(_upperNode, cToken);
+				switch(flag)
+				{
+					case 0:
+						throw std::runtime_error("Syntax error!");
+						break;
+					case 1:
+						break;
+					case 2:
+						continue;
+						break;
+				}
+			}
 		}
 		printf("SUCCESS!\n");
 	}
 
-	bool parseTree::_ifMatched(Node* nTerm, Token Term)
+	const int parseTree::_ifMatched(Node* nTerm, Token Term)
 	{
-		printf("In match!\n");
-		std::cout << _upperNode->mType << std::endl;
-		std::vector<Node> bufUncov; //буффер для раскрытого нетерминала
+		std::vector<Node> bufUncov; //буфер для раскрытого нетерминала
+		int flag; //wrong syntax if 0
+			  //it was nonterminal if 1
+			  //it was terminal if 2
 		switch(nTerm->mType)
 		{
 			case BLACKSPACE:
+				flag = 1;
 				switch(Term.mType)
 				{
 					case LBRAC:
@@ -72,11 +83,12 @@ namespace dnf_parser
 						bufUncov.push_back(Node(1, END));
 						break;
 					default:
-						return false;
+						return 0;
 						break;
 				}
 				break;
 			case DNF:
+				flag = 1;
 				switch(Term.mType)
 				{
 					case LBRAC:
@@ -86,11 +98,12 @@ namespace dnf_parser
 						bufUncov.push_back(Node(0, DNF_TMP));
 						break;
 					default:
-						return false;
+						return 0;
 						break;
 				}
 				break;
 			case DNF_TMP:
+				flag = 1;
 				switch(Term.mType)
 				{
 					case END:
@@ -100,11 +113,12 @@ namespace dnf_parser
 						bufUncov.push_back(Node(0, DNF));
 						break;
 					default:
-						return false;
+						return 0;
 						break;
 				}
 				break;
 			case CONJ:
+				flag = 1;
 				switch(Term.mType)
 				{
 					case LBRAC:
@@ -119,11 +133,12 @@ namespace dnf_parser
 						bufUncov.push_back(Node(0, PREDICATE));
 						break;
 					default:
-						return false;
+						return 0;
 						break;
 				}
 				break;
 			case PREDICATE:
+				flag = 1;
 				switch(Term.mType)
 				{
 					case IDENTIFIER:
@@ -133,11 +148,12 @@ namespace dnf_parser
 						bufUncov.push_back(Node(0, POLYNOM));
 						break;
 					default:
-						return false;
+						return 0;
 						break;
 				}
 				break;
 			case POLYNOM:
+				flag = 1;
 				switch(Term.mType)
 				{
 					case IDENTIFIER:
@@ -146,11 +162,12 @@ namespace dnf_parser
 						bufUncov.push_back(Node(0, SUM));
 						break;
 					default:
-						return false;
+						return 0;
 						break;
 				}
 				break;
 			case ORDER:
+				flag = 1;
 				switch(Term.mType)
 				{
 					case GREATER:
@@ -160,11 +177,12 @@ namespace dnf_parser
 						bufUncov.push_back(Node(1, EQUAL));
 						break;
 					default:
-						return false;
+						return 0;
 						break;
 				}
 				break;
 			case SUM:
+				flag = 1;
 				switch(Term.mType)
 				{
 					case END:
@@ -179,11 +197,12 @@ namespace dnf_parser
 						bufUncov.push_back(Node(0, POLYNOM));
 						break;
 					default:
-						return false;
+						return 0;
 						break;
 				}
 				break;
 			case MULT:
+				flag = 1;
 				switch(Term.mType)
 				{
 					case INTEGER_LITERAL:
@@ -195,11 +214,12 @@ namespace dnf_parser
 						bufUncov.push_back(Node(0, MULT_TMP));
 						break;
 					default:
-						return false;
+						return 0;
 						break;
 				}
 				break;
 			case MULT_TMP:
+				flag = 1;
 				switch(Term.mType)
 				{
 					case END:
@@ -214,27 +234,31 @@ namespace dnf_parser
 						bufUncov.push_back(Node(1, MULTIPLY));
 						bufUncov.push_back(Node(0, MULT));
 					default:
-						return false;
+						return 0;
 						break;
 				}
 				break;
 			case CONST:
+				flag = 1;
 				switch(Term.mType)
 				{
 					case INTEGER_LITERAL:
 						bufUncov.push_back(Node(1, INTEGER_LITERAL));
 					default:
-						return false;
+						return 0;
 						break;
 				}
 				break;
 			default:
-				return false;
+				if(nTerm->mTerm && nTerm->mType == Term.mType) return 2;
+				return 0;
 				break;
 		}
+		std::cout << sTokenTypeStrings[bufUncov[0].mType] << std::endl;
 		for(int iter = 0; iter < bufUncov.size(); ++iter){_addNode(bufUncov[iter]);}
 		bufUncov.clear();
-		return true;
+		std::cout << sTokenTypeStrings[_root->getChildren()[0]->mType] << std::endl << std::endl;
+		return flag;
 	}
 }
 

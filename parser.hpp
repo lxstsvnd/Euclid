@@ -7,13 +7,13 @@ namespace dnf_parser
 	class Node
 	{
 		private:
-			std::vector<const Node*> _chPtr; //указатели на потомков вершины
 		public:
 			enum TokenType mType{WHITESPACE}; //тип вершины дерева
 			std::string mText; //текст в токене (мб бесполезно)
 			bool mTerm; //1, если терминал
 			Node(int isTerm, enum TokenType type);
 			Node();
+			std::vector<const Node*> _chPtr{};
 			std::vector<const Node*> getChildren() const; //получить потомков вершины
 			void addChild(const Node& addedNode); //добавить потомка
 	};
@@ -26,7 +26,7 @@ namespace dnf_parser
 			std::vector<Token> _Line; //разбираемая последовательность терминалов
 			void _getUpperNode(const Node* toNode); //поиск верхнего в стеке нетерминала
 			void _addNode(const Node& addedNode); //замена раскрытого нетерминала
-			bool _ifMatched(Node* nTerm, Token Term); //анализ LL-таблицы
+			const int _ifMatched(Node* nTerm, Token Term); //анализ LL-таблицы
 		public:
 			parseTree(const std::vector<Token>& Line);
 			void getUpperNode(); //обновление текущего вызываемого нетерминала
