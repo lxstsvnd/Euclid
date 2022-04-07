@@ -11,6 +11,7 @@ namespace dnf_parser
 			enum TokenType mType{WHITESPACE}; //тип вершины дерева
 			std::string mText; //текст в токене (мб бесполезно)
 			bool mTerm; //1, если терминал
+			bool vTerm = 0; //1, если терминал посещен
 			Node(int isTerm, enum TokenType type);
 			Node();
 			std::vector<const Node*> _chPtr{};

@@ -28,6 +28,10 @@ namespace dnf_parser
 			{
 				_getUpperNode(bufNode);
 				//return;
+			}else if(bufNode->mTerm && !bufNode->vTerm && bufNode->mType != EPSILON)
+			{
+				_upperNode = (Node*)bufNode;
+				std::cout << "curAnalyzed: " << sTokenTypeStrings[_upperNode->mType] << std::endl;
 			}
 		}
 		//std::cout << std::endl;
@@ -60,6 +64,7 @@ namespace dnf_parser
 					case 1:
 						break;
 					case 2:
+						_upperNode->vTerm = 1;
 						j = false;
 						break;
 					case 3:
@@ -284,11 +289,11 @@ namespace dnf_parser
 		std::cout << std::endl << std::endl;
 		if(flag == 3) return 3;
 		for(int iter = 0; iter < bufUncov.size(); ++iter){_addNode(bufUncov[iter]);}
-		if(bufUncov[0]->mTerm && bufUncov[0]->mType != EPSILON)
-		{
-			if(bufUncov[0]->mType == Term.mType) flag = 2;
-			else return 0;
-		}
+		//if(bufUncov[0]->mTerm && bufUncov[0]->mType != EPSILON)
+		//{
+		//	if(bufUncov[0]->mType == Term.mType) flag = 2;
+		//	else return 0;
+		//}
 		bufUncov.clear();
 		return flag;
 	}
