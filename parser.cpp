@@ -17,31 +17,26 @@ namespace dnf_parser
 		_upperNode = _root;
 		for(const Node* bufNode : toNode->getChildren())
 		{
-			if(_upperNode != _root) return;
-			//std::cout << sTokenTypeStrings[bufNode->mType] << " ";
+			if(_upperNode != _root) return; //если ссылка на нетерминал получена, функция завершает работу
+
 			if(!bufNode->mTerm && bufNode->getChildren().empty())
 			{
 				_upperNode = (Node*)bufNode;
 				std::cout << "curAnalyzed: " << sTokenTypeStrings[_upperNode->mType] << std::endl;
-				//return;
-			}else if(!bufNode->mTerm && !bufNode->getChildren().empty())
-			{
-				_getUpperNode(bufNode);
-				//return;
-			}else if(bufNode->mTerm && !bufNode->vTerm && bufNode->mType != EPSILON)
+			}
+			else if(!bufNode->mTerm && !bufNode->getChildren().empty()){_getUpperNode(bufNode);}
+			else if(bufNode->mTerm && !bufNode->vTerm && bufNode->mType != EPSILON)
 			{
 				_upperNode = (Node*)bufNode;
 				std::cout << "curAnalyzed: " << sTokenTypeStrings[_upperNode->mType] << std::endl;
 			}
 		}
-		//std::cout << std::endl;
-		return;
 	}
 
 	parseTree::parseTree(const std::vector<Token>& Line)
 	{
 		_Line = Line;
-		_Line.push_back(Token(END)); //добавляем указатель на конец строки
+		_Line.push_back(Token(END)); //указатель на конец строки
 		_root = new Node(0, BLACKSPACE); //корень изначально рабочий нетерминал
 	}
 	void parseTree::getUpperNode(){_getUpperNode(_root);}
@@ -51,12 +46,11 @@ namespace dnf_parser
 		for(const Token cToken : _Line)
 		{
 			bool j = true;
-			while(j == true)
+			while(j)
 			{
-				getUpperNode();
+				getUpperNode(); //обновление указателя на раскрываемый нетерминал
 				std::cout << sTokenTypeStrings[_upperNode->mType] << " " << sTokenTypeStrings[cToken.mType] << std::endl;
-				int flag = _ifMatched(_upperNode, cToken);
-				switch(flag)
+				switch(_ifMatched(_upperNode, cToken))
 				{
 					case 0:
 						throw std::runtime_error("Syntax error!");
@@ -82,6 +76,7 @@ namespace dnf_parser
 		int flag; //wrong syntax if 0
 			  //it was nonterminal if 1
 			  //it was terminal if 2
+			  //success if 3
 		switch(nTerm->mType)
 		{
 			case END:
@@ -102,6 +97,7 @@ namespace dnf_parser
 					case LBRAC:
 					case IDENTIFIER:
 					case INTEGER_LITERAL:
+					case RESISTANCE:
 						bufUncov.push_back(new Node(0, DNF));
 						bufUncov.push_back(new Node(0, END));
 						break;
@@ -115,10 +111,16 @@ namespace dnf_parser
 				switch(Term.mType)
 				{
 					case LBRAC:
+						bufUncov.push_back(new Node(1, LBRAC));
+						bufUncov.push_back(new Node(0, CONJ));
+						bufUncov.push_back(new Node(1, RBRAC));
+						bufUncov.push_back(new Node(1, DISJOINT));
+						bufUncov.push_back(new Node(0, DNF));
+						break;
 					case IDENTIFIER:
 					case INTEGER_LITERAL:
+					case RESISTANCE:
 						bufUncov.push_back(new Node(0, CONJ));
-						bufUncov.push_back(new Node(0, DNF_TMP));
 						break;
 					default:
 						return 0;
@@ -129,12 +131,26 @@ namespace dnf_parser
 				flag = 1;
 				switch(Term.mType)
 				{
-					case END:
-						bufUncov.push_back(new Node(1, EPSILON));
-						break;
 					case DISJOINT:
 						bufUncov.push_back(new Node(1, DISJOINT));
 						bufUncov.push_back(new Node(0, DNF));
+						break;
+					default:
+						return 0;
+						break;
+				}
+				break;
+			case CONJ_TMP:
+				flag = 1;
+				switch(Term.mType)
+				{
+					case END:
+					case RBRAC:
+						bufUncov.push_back(new Node(1, EPSILON));
+						break;
+					case CONJUNCT:
+						bufUncov.push_back(new Node(1, CONJUNCT));
+						bufUncov.push_back(new Node(0, CONJ));
 						break;
 					default:
 						return 0;
@@ -145,16 +161,11 @@ namespace dnf_parser
 				flag = 1;
 				switch(Term.mType)
 				{
-					case LBRAC:
-						bufUncov.push_back(new Node(1, LBRAC));
-						bufUncov.push_back(new Node(0, PREDICATE));
-						bufUncov.push_back(new Node(1, CONJUNCT));
-						bufUncov.push_back(new Node(0, CONJ));
-						bufUncov.push_back(new Node(1, RBRAC));
-						break;
 					case IDENTIFIER:
 					case INTEGER_LITERAL:
+					case RESISTANCE:
 						bufUncov.push_back(new Node(0, PREDICATE));
+						bufUncov.push_back(new Node(0, CONJ_TMP));
 						break;
 					default:
 						return 0;
@@ -170,6 +181,10 @@ namespace dnf_parser
 						bufUncov.push_back(new Node(0, POLYNOM));
 						bufUncov.push_back(new Node(0, ORDER));
 						bufUncov.push_back(new Node(0, POLYNOM));
+						break;
+					case RESISTANCE:
+						bufUncov.push_back(new Node(1, RESISTANCE));
+						bufUncov.push_back(new Node(0, PREDICATE));
 						break;
 					default:
 						return 0;
@@ -210,7 +225,6 @@ namespace dnf_parser
 				switch(Term.mType)
 				{
 					case END:
-					case DISJOINT:
 					case CONJUNCT:
 					case RBRAC:
 					case GREATER:
@@ -248,7 +262,6 @@ namespace dnf_parser
 				switch(Term.mType)
 				{
 					case END:
-					case DISJOINT:
 					case CONJUNCT:
 					case RBRAC:
 					case GREATER:
@@ -259,6 +272,11 @@ namespace dnf_parser
 					case MULTIPLY:
 						bufUncov.push_back(new Node(1, MULTIPLY));
 						bufUncov.push_back(new Node(0, MULT));
+						break;
+					case IDENTIFIER:
+					case CONST:
+						bufUncov.push_back(new Node(0, MULT));
+						break;
 					default:
 						return 0;
 						break;
@@ -281,19 +299,15 @@ namespace dnf_parser
 				return 0;
 				break;
 		}
-		std::cout << "Rule: ";
-		for(int iter = 0; iter < bufUncov.size(); ++iter)
-		{
-			std::cout << sTokenTypeStrings[bufUncov[iter]->mType] << " "; 
-		}
-		std::cout << std::endl << std::endl;
-		if(flag == 3) return 3;
-		for(int iter = 0; iter < bufUncov.size(); ++iter){_addNode(bufUncov[iter]);}
-		//if(bufUncov[0]->mTerm && bufUncov[0]->mType != EPSILON)
-		//{
-		//	if(bufUncov[0]->mType == Term.mType) flag = 2;
-		//	else return 0;
-		//}
+
+		std::cout << "Rule: ";							//немного косметической работы
+		for(int iter = 0; iter < bufUncov.size(); ++iter)			//
+		{									//
+			std::cout << sTokenTypeStrings[bufUncov[iter]->mType] << " ";	//
+		}									//
+		std::cout << std::endl << std::endl;					//
+
+		for(int iter = 0; iter < bufUncov.size(); ++iter){_addNode(bufUncov[iter]);} //заполнение потомков нетерминала
 		bufUncov.clear();
 		return flag;
 	}

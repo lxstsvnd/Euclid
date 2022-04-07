@@ -9,12 +9,11 @@ namespace dnf_parser
 		private:
 		public:
 			enum TokenType mType{WHITESPACE}; //тип вершины дерева
-			std::string mText; //текст в токене (мб бесполезно)
 			bool mTerm; //1, если терминал
-			bool vTerm = 0; //1, если терминал посещен
+			bool vTerm{0}; //1, если терминал посещен
 			Node(int isTerm, enum TokenType type);
 			Node();
-			std::vector<const Node*> _chPtr{};
+			std::vector<const Node*> _chPtr{}; //потомки вершины
 			std::vector<const Node*> getChildren() const; //получить потомков вершины
 			void addChild(const Node* addedNode); //добавить потомка
 	};
@@ -22,7 +21,7 @@ namespace dnf_parser
 	class parseTree
 	{
 		private:
-			Node* _root;
+			Node* _root; //корень дерева
 			Node* _upperNode; //текущий раскрываемый нетерминал
 			std::vector<Token> _Line; //разбираемая последовательность терминалов
 			void _getUpperNode(const Node* toNode); //поиск верхнего в стеке нетерминала
