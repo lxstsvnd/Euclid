@@ -117,6 +117,15 @@ namespace dnf_parser
 					_cToken.mType = INTEGER_LITERAL;
 					_cToken.mText.push_back('-');
 					break;
+
+				case '\n':
+				case '\t':
+				case ' ':
+				case '\r':
+				case '\v':
+					if(!_cToken.mText.empty()){endToken();}
+					break;
+
 				default:
 					throw std::runtime_error("unknown symbol!");
 					break;

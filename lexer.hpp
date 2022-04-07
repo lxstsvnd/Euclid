@@ -30,6 +30,7 @@ namespace dnf_parser
 		DNF, //ДНФ
 		DNF_TMP, //вспомогательный нетерминал для ДНФ
 		CONJ, //конъюнкция предикатов
+		CONJ_TMP,
 		PREDICATE, //предикат
 		POLYNOM,
 		ORDER,
@@ -38,7 +39,8 @@ namespace dnf_parser
 		MULT_TMP, //вспомогательный нетерминал для умножения
 		CONST,
 
-		END
+		END,
+		EPSILON
 	};
 
 	static const char* sTokenTypeStrings[] =
@@ -62,6 +64,7 @@ namespace dnf_parser
 		"DNF",
 		"DNF_TMP",
 		"CONJ",
+		"CONJ_TMP",
 		"PREDICATE",
 		"POLYNOM",
 		"ORDER",
@@ -70,7 +73,8 @@ namespace dnf_parser
 		"MULT_TMP",
 		"CONST",
 
-		"END"
+		"END",
+		"EPSILON"
 	};
 	
 	class Token
