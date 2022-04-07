@@ -14,8 +14,6 @@ public:
 	void print();
 	int get_degree();
 	void delete_zeros();
-	Polynom delete_elder_coefficient();
-	Polynom remain_elder_coefficient();
 	friend bool operator ==(Polynom,Polynom);
 	friend std::pair<Polynom,Polynom> divide(Polynom,Polynom);
 };

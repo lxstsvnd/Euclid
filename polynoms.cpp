@@ -1,27 +1,36 @@
 #include"polynoms.hpp"
 #include<iostream>
-//need to delete elder zeros
+//В этом файле описываются функции для работы с многочленами
+//В многочлене находится вектор коэффициентов типа mpz_class
+//mpz_class - длинные числа целой арифметики из пакета GMP
+//В векторе коэффициенты располагаются в порядке возрастания степени
+
+//Конструктор многочлена - получает на вход вектор элементов mpz_class
 Polynom::Polynom(std::vector<mpz_class> coefficients): _coefficients(coefficients){}
 
+//Функция возвращает вектор коэффициентов многочлена
 std::vector<mpz_class> Polynom::get_coefficients()
 {
 	return _coefficients;
 }
 
+//Функция печатает многочлен в формате 1x^0+2x^2+3x^3+...
 void Polynom::print()
 {
 	int size=_coefficients.size();
-	for(int i = 0; i < size;i++)
+	for(int i = 0; i < size ; i++)
 	{
 		std::cout<<_coefficients[i]<<"x^"<<i<<"+";
 	}
 }
 
+//Возвращает степень многочлена
 int Polynom::get_degree()
 {
 	return _coefficients.size()-1;
 }
 
+//Удаляет старшие нулевые коэффициенты, если многочлен это не константа
 void Polynom::delete_zeros()
 {
 	int i = _coefficients.size()-1;
@@ -34,6 +43,7 @@ void Polynom::delete_zeros()
 	}
 }
 
+//Возвращает производную многочлена
 Polynom Polynom::get_derivative()
 {
 	if(this->get_degree()==0)
@@ -44,83 +54,64 @@ Polynom Polynom::get_derivative()
 		derivative_coefficients.push_back(_coefficients[i]*i);
 	}
 	return Polynom(derivative_coefficients);
-}
-
-Polynom Polynom::delete_elder_coefficient()
-{
-	std::vector<mpz_class> coefficients=_coefficients;
-	coefficients.pop_back();
-	return Polynom(coefficients);
 }	
 
-Polynom Polynom::remain_elder_coefficient()
-{
-	std::vector<mpz_class> coefficients(_coefficients.size());
-	for(int i = 0;i<_coefficients.size()-1;i++)
-		coefficients[i]=0;
-	coefficients[coefficients.size()-1]=_coefficients[coefficients.size()-1];
-	return Polynom(coefficients);
-}
-
+//Возвращает true, если многочлены покоэффициентно равны, false иначе
 bool operator ==(Polynom lhs, Polynom rhs)
 {
 	std::vector<mpz_class> lhs_coefficients=lhs.get_coefficients();
 	std::vector<mpz_class> rhs_coefficients=rhs.get_coefficients();
-	if(lhs.get_degree() != rhs.get_degree())
+	if(lhs.get_degree() != rhs.get_degree())//если их степени не равны то дальше проверять нет смысла
 		return false;
-	for( int i = 0; i <= lhs.get_degree() ; i++)
-	{
+	for( int i = 0; i <= lhs.get_degree() ; i++)//покоэффициентное сравнение
 		if(lhs_coefficients[i]!=rhs_coefficients[i])
-		{
 			return false;
-		}
-	}
 	return true;
 }
 
+//Функция модифицированного деления многочленов, замкнутого для многочленов в целых коэффициентов
+//Работает по алгоритму школьного деления в столбик
+//Принимает два многочлена - первый делимое, второе делитель, степень первого не меньше степени второго
+//Возвращает два многочлена - первый остаток, второй частное
 std::pair<Polynom, Polynom> divide(Polynom Pdivident, Polynom Pdivider)
 {
-	std::vector<mpz_class> zer{0};
-	Polynom Zero(zer);
-	std::vector<mpz_class> divident = Pdivident.get_coefficients();
-	std::vector<mpz_class> divider = Pdivider.get_coefficients();
-	std::vector<mpz_class> remainder=divident;
-	std::vector<mpz_class> quotient;
-	
-	//modifying
-	mpz_class h=divider[divider.size()-1];
+	std::vector<mpz_class> divident = Pdivident.get_coefficients();//Вектор делимого
+	std::vector<mpz_class> divider = Pdivider.get_coefficients();//Вектор делителя
+	std::vector<mpz_class> remainder=divident;//Вектор остатка
+	std::vector<mpz_class> quotient;//Вектор частного
+
+	mpz_class h=divider[divider.size()-1];//коэффициент для модифицированного деления
 	mpz_class h_0=h;
+
 	for(int i = 0; i<remainder.size()-divider.size();i++)
 		h=h*h_0;
 	for(int i = 0; i<remainder.size();i++)
 		remainder[i]*=h;
-	//deleting zeros from the end
+
+	//Удаляем нули с конца
 	int i = divident.size()-1;
 	while(divident[i--]==0)
 		divident.pop_back();
-
+	//Если делитель это константа, то остаток это ноль
 	if(divider.size()==1)
-	{
 		std::pair<Polynom,Polynom> result{Polynom(std::vector<mpz_class>{0}),Polynom(divident)};
-	}
-	//need to check if degree of divider is bigger then degree of divident
+
 	while (remainder.size()>=divider.size())
 	{
-		//deleting elder zero if the exists
+		//Каждую итерацию чистим коэффициенты с конца
 		if (remainder.back()==0)
 		{
 			remainder.pop_back();
 			continue;
 		}
 
-		std::vector<mpz_class> deduct(remainder.size(),0);
-		std::vector<mpz_class> temp_quotient;
-		mpz_class q;
+		std::vector<mpz_class> deduct(remainder.size(),0);//Вектор вычитаемого
+		std::vector<mpz_class> temp_quotient;//Вектор в котором храним результат вычитания из остатка вычитаемого
+		mpz_class q;//Коэффициент частного
 		q=remainder.back()/divider.back();
-//		std::cout<<"q = "<<q<<std::endl;
 		quotient.push_back(q);
 		int size_dif=remainder.size()-divider.size();
-		for(int i = 0; i < remainder.size() ; i++)
+		for(int i = 0; i < remainder.size() ; i++)//Рассчитываем вычитаемое
 		{
 			if(i>=size_dif)
 				deduct[i]=q*divider[i-size_dif];
@@ -128,30 +119,16 @@ std::pair<Polynom, Polynom> divide(Polynom Pdivident, Polynom Pdivider)
 				deduct[i]=0;
 		}
 
-		//checkign deduction
-//		std::cout<<"deduct:"<<std::endl;
-//		for (int i = 0; i < deduct.size() ;i++)
-//			std::cout<<i<<":"<<deduct[i]<<std::endl;
-
-		for(int i = 0; i < remainder.size();i++)
-		{
+		for(int i = 0; i < remainder.size();i++)//Вычитаем из остатка вычитаемое
 			temp_quotient.push_back(remainder[i]-deduct[i]);
-		}
-//		std::cout<<"result:"<<std::endl;
-//		for (int i = 0;i < temp_quotient.size(); i++)
-//			std::cout<<i<<":"<<temp_quotient[i]<<std::endl;
 		remainder=temp_quotient;
 	}
 
-	//now we need to reverse quotient vector
+	//Нужно перевернуть вектор остатков
 	std::vector<mpz_class> reversed_quotient;
 	for(int i = quotient.size()-1;i>=0;i--)
 		reversed_quotient.push_back(quotient[i]);
 	quotient=reversed_quotient;
-	
-//	std::cout<<"REMAINDER"<<std::endl;
-//	for(int i =0;i<remainder.size();i++)
-//		std::cout<<remainder[i]<<std::endl;
 	
 	Polynom rem(remainder);
 	rem.delete_zeros();
