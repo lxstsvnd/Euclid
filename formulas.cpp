@@ -7,7 +7,8 @@
 //Конструктор предиката - получает многочлен и negative=1, если перед предикатом стоит отрицание
 //и negative=0, если перед предикатом не стоит отрицания
 Predicate::Predicate(Polynom polynom, bool negative):_polynom(polynom),_negative(negative){}
-Predicate::~Predicate(){}
+Predicate::~Predicate()
+{}
 
 //Возвращает многочлен, находящийся в предикате 
 Polynom Predicate::get_polynom()
@@ -37,11 +38,13 @@ void Predicate::set_value(bool value)
 Equality_predicate::Equality_predicate(Polynom polynom,bool negative) : Predicate(polynom,negative){}
 //Деструктор для предиката равенства
 Equality_predicate::~Equality_predicate(){}
+bool Equality_predicate::calculate(){return true;}
 
 //Конструктор для предиката сравнения
 Lesser_predicate::Lesser_predicate(Polynom polynom, bool negative) : Predicate(polynom,negative){}
 //Деструктор для предиката сравенния
 Lesser_predicate::~Lesser_predicate(){}
+bool Lesser_predicate::calculate(){return true;}
 
 //Конструктор конъюнкта - получает вектор, состоящий из предикатов
 Conjunct::Conjunct(std::vector<Predicate*> predicats): _predicats(predicats) {}
