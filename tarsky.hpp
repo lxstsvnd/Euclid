@@ -1,5 +1,5 @@
 #include"polynoms.hpp"
-
+//В этом заголовочном файле лежат объявления функции для алгоритма Тарского
 namespace Kirill
 {
 	void uniquying(std::vector<Polynom>&);
