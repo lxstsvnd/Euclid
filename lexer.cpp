@@ -1,6 +1,6 @@
 #include "lexer.hpp"
 
-namespace dnf_parser
+namespace Dima
 {
 	Token::Token(enum TokenType type){mType = type;}
 	Token::Token(){;}

@@ -1,10 +1,17 @@
 #include "parser.hpp"
 
-namespace dnf_parser
+namespace Dima
 {
 	Node::Node(int isTerm, enum TokenType type)
 	{
 		mType = type;
+		mTerm = isTerm;
+		_chPtr.clear();
+	}
+	Node::Node(int isTerm, std::string text, enum TokenType type)
+	{
+		mType = type;
+		mText = std::atoi(mText.c_str());
 		mTerm = isTerm;
 		_chPtr.clear();
 	}
@@ -287,7 +294,7 @@ namespace dnf_parser
 				switch(Term.mType)
 				{
 					case INTEGER_LITERAL:
-						bufUncov.push_back(new Node(1, INTEGER_LITERAL));
+						bufUncov.push_back(new Node(1, Term.mText, INTEGER_LITERAL));
 						break;
 					default:
 						return 0;
@@ -311,5 +318,164 @@ namespace dnf_parser
 		bufUncov.clear();
 		return flag;
 	}
+
+	std::vector<Kirill::Predicate*> parseTree::_makeConjunct(const Node* fromNode)
+	{
+		std::vector<Kirill::Predicate*> curPredicates{};
+		curPredicates.push_back(_makePredicate(fromNode->getChildren()[0])); //первый потомок - всегда [PREDICATE]
+		switch(fromNode->getChildren()[1]->getChildren().size()) //второй потомок - всегда [CONJ_TMP]
+		{
+			case 1: //[CONJ_TMP] раскрылся в [EPSILON]
+				break;
+			case 2: //[CONJ_TMP] раскрылся в [CONJUNCT][CONJ]
+				_conjuncts.push_back(_makeConjunct(fromNode->getChildren()[1]->getChildren()[1]));
+				break;
+		}
+		return curPredicates;
+	}
+
+	Kirill::Predicate* parseTree::_makePredicate(const Node* fromNode)
+	{
+		switch(fromNode->getChildren().size())
+		{
+			case 2: //если предикат раскрылся в отрицание предиката
+				switch(_negotiated) 
+				{
+					case true:
+						_negotiated = false;
+						break;
+					case false:
+						_negotiated = true;
+						break;
+				}
+				return _makePredicate(fromNode->getChildren()[1]);
+				break;
+			case 3: //если предикат раскрылся в неравенство
+				Kirill::Predicate* curPredicate;
+
+				_makePolynom(_curLPolynom, fromNode->getChildren()[0]); //собираются левый и правый полиномы
+				_makePolynom(_curRPolynom, fromNode->getChildren()[2]); //
+
+				std::vector<mpz_class> curCoefficients{}; //далее считается разность коэффициентов
+				if(_curLPolynom->get_coefficients().size() >= _curRPolynom->get_coefficients().size())
+				{
+					for(int iter = 0; iter < _curRPolynom->get_coefficients().size(); ++iter)
+					{
+						curCoefficients.push_back(_curLPolynom->get_coefficients()[iter] 
+								-_curRPolynom->get_coefficients()[iter]);
+					}
+					for(int iter = _curRPolynom->get_coefficients().size(); iter < _curLPolynom->get_coefficients().size()
+								; ++iter){curCoefficients.push_back(_curLPolynom->get_coefficients()[iter]);}
+				}
+				else
+				{
+					for(int iter = 0; iter < _curLPolynom->get_coefficients().size(); ++iter)
+					{
+						curCoefficients.push_back(_curLPolynom->get_coefficients()[iter]
+								-_curRPolynom->get_coefficients()[iter]);
+					}
+					for(int iter = _curLPolynom->get_coefficients().size(); iter < _curRPolynom->get_coefficients().size()
+							; ++iter){curCoefficients.push_back(0 - _curLPolynom->get_coefficients()[iter]);}
+				}
+
+				switch(fromNode->getChildren()[1]->getChildren()[0]->mType) //инициализируется один из двух предикатов
+				{
+					case GREATER:
+						curPredicate = new Kirill::Greater_predicate(Kirill::Polynom(curCoefficients), _negotiated);
+						break;
+					case EQUAL:
+						curPredicate = new Kirill::Equality_predicate(Kirill::Polynom(curCoefficients), _negotiated);
+						break;
+				}
+
+				_negotiated = false;
+				delete _curLPolynom;
+				delete _curRPolynom;
+				_curLPolynom = NULL;
+				_curRPolynom = NULL;
+				return curPredicate;
+				break;
+		}
+		throw std::runtime_error("aaa");
+	}
+
+	void parseTree::_makePolynomSpecial(const Node* fromNode, int _coef)
+	{
+		int coef = _coef; //вспомогательный коэффициент
+		switch(fromNode->getChildren()[0]->getChildren()[0]->mType) //первый всегда [MULT]
+		{
+			case IDENTIFIER:
+				++degree;
+				break;
+			case CONST:
+				coef = std::atoi(fromNode->getChildren()[0]->getChildren()[0]->getChildren()[0]->mText.c_str());
+				break;
+		}
+
+		switch(fromNode->getChildren()[0]->getChildren()[1]->getChildren()[0]->mType)
+		{
+			case EPSILON:
+				break;
+			case MULT:
+				_makePolynomSpecial(fromNode->getChildren()[0]->getChildren()[1]->getChildren()[0], coef);
+				break;
+			case MULTIPLY:
+				_makePolynomSpecial(fromNode->getChildren()[0]->getChildren()[1]->getChildren()[1], coef);
+				break;
+		}
+
+		_coefficients.push_back(std::pair<mpz_class, int>{coef, degree});
+		coef = 1;
+		degree = 0;
+	}
+
+	void parseTree::_makePolynom(Kirill::Polynom* toPolynom, const Node* fromNode) //вводится всегда в порядке убывания степени
+	{									       //[^] пока не реализован
+		int curPos{0}; //для отслеживания текущей позиции в векторе коэффициентов
+		_makePolynomSpecial(fromNode, 1);
+
+		std::cout << "df" << std::endl;
+		switch(fromNode->getChildren()[1]->getChildren()[0]->mType)
+		{
+			case PLUS:
+				_makePolynom(toPolynom, fromNode->getChildren()[1]->getChildren()[1]);
+				break;
+			case EPSILON:
+				break;
+		}
+
+		std::vector<mpz_class> actualCoefs; //вектор коэффициентов в приемлемом для конструктора виде
+		std::sort(_coefficients.begin(), _coefficients.end(), 
+				[](std::pair<mpz_class, int> &a, std::pair<mpz_class, int> &b){return std::get<1>(a) < std::get<1>(b);});
+		for(std::pair<mpz_class, int> curPair : _coefficients)
+		{
+			while(curPos < std::get<1>(curPair))
+			{
+				actualCoefs.push_back(0);
+				++curPos;
+			}
+			actualCoefs.push_back(std::get<0>(curPair));
+			++curPos;
+		}
+		toPolynom = new Kirill::Polynom(actualCoefs);
+		_coefficients.clear();
+	}
+
+	void parseTree::makeConjuncts(){_getConjuncts(_root);}
+	void parseTree::_getConjuncts(const Node* fromNode) //[BLACK] всегда раскрывается в [DNF] [END]
+	{
+		switch(fromNode->getChildren()[0]->getChildren().size())
+		{
+			case 1: //[DNF] раскрылся в [CONJ]
+				_conjuncts.push_back(Kirill::Conjunct(_makeConjunct(fromNode->getChildren()[0]->getChildren()[0])));
+				break;
+			case 5: //[DNF] раскрылся в [(][CONJ][)][DISJOINT][DNF]
+				_conjuncts.push_back(Kirill::Conjunct(_makeConjunct(fromNode->getChildren()[0]->getChildren()[1])));
+				_getConjuncts(fromNode->getChildren()[0]->getChildren()[4]);
+				break;
+		}
+	}
+	
+	std::vector<Kirill::Conjunct> parseTree::getConjuncts(){return _conjuncts;}
 }
 

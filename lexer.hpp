@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include <iostream>
 
-namespace dnf_parser
+namespace Dima
 {
 	enum TokenType //объявление токенов
 	{
