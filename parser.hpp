@@ -13,14 +13,22 @@ namespace Dima
 	{
 		private:
 			std::vector<const Node*> _chPtr{}; //потомки вершины
+			enum TokenType _mType{WHITESPACE}; //тип вершины дерева
+			bool _mTerm; //1, если терминал
+			bool _vTerm{0}; //1, если терминал посещен
+			std::string _mText{""};
 		public:
-			enum TokenType mType{WHITESPACE}; //тип вершины дерева
-			bool mTerm; //1, если терминал
-			bool vTerm{0}; //1, если терминал посещен
-			std::string mText{""};
 			Node(int isTerm, enum TokenType type);
 			Node(int isTerm, std::string text, enum TokenType type);
 			Node();
+			void setType(enum TokenType newType);
+			void setText(std::string newText);
+			void setMTerm(bool mTerm);
+			void setVTerm(bool vTerm);
+			enum TokenType getType() const;
+			std::string getText() const;
+			bool getMTerm() const;
+			bool getVTerm() const;
 			std::vector<const Node*> getChildren() const; //получить потомков вершины
 			void addChild(const Node* addedNode); //добавить потомка
 	};

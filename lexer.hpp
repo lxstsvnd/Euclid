@@ -80,13 +80,18 @@ namespace Dima
 	class Token
 	{
 		private:
+			enum TokenType _mType{WHITESPACE}; //тип токена
+			std::string _mText; //текст в токене
+			bool _mTerm{1}; //всегда терминал, т.к. во вводе
 		public:
 			Token(enum TokenType type);
 			Token();
-			enum TokenType mType{WHITESPACE}; //тип токена
-			std::string mText; //текст в токене
-			bool mTerm = 1; //всегда терминал, т.к. во вводе
-
+			void setText(std::string newText);
+			void setType(enum TokenType newType);
+			void textPush(char symbol);
+			void textErase();
+			const std::string getText() const;
+			const enum TokenType getType() const;
 	};
 
 	class Tokenizer

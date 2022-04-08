@@ -4,18 +4,29 @@ namespace Dima
 {
 	Node::Node(int isTerm, enum TokenType type)
 	{
-		mType = type;
-		mTerm = isTerm;
+		_mType = type;
+		_mTerm = isTerm;
 		_chPtr.clear();
 	}
 	Node::Node(int isTerm, std::string text, enum TokenType type)
 	{
-		mType = type;
-		mText = std::atoi(mText.c_str());
-		mTerm = isTerm;
+		_mType = type;
+		_mText = std::atoi(_mText.c_str());
+		_mTerm = isTerm;
 		_chPtr.clear();
 	}
 	Node::Node(){;}
+
+	void Node::setType(enum TokenType newType){_mType = newType;}
+	void Node::setText(std::string newText){_mText = newText;}
+	void Node::setMTerm(bool mTerm){_mTerm = mTerm;}
+	void Node::setVTerm(bool vTerm){_vTerm = vTerm;}
+
+	enum TokenType Node::getType() const{return _mType;}
+	std::string Node::getText() const{return _mText;}
+	bool Node::getMTerm() const{return _mTerm;}
+	bool Node::getVTerm() const{return _vTerm;}
+
 	std::vector<const Node*> Node::getChildren() const{return _chPtr;}
 	void Node::addChild(const Node* addedNode){_chPtr.push_back(addedNode);}
 
@@ -26,16 +37,16 @@ namespace Dima
 		{
 			if(_upperNode != _root) return; //если ссылка на нетерминал получена, функция завершает работу
 
-			if(!bufNode->mTerm && bufNode->getChildren().empty())
+			if(!bufNode->getMTerm() && bufNode->getChildren().empty())
 			{
 				_upperNode = (Node*)bufNode;
-				std::cout << "curAnalyzed: " << sTokenTypeStrings[_upperNode->mType] << std::endl;
+				std::cout << "curAnalyzed: " << sTokenTypeStrings[_upperNode->getType()] << std::endl;
 			}
-			else if(!bufNode->mTerm && !bufNode->getChildren().empty()){_getUpperNode(bufNode);}
-			else if(bufNode->mTerm && !bufNode->vTerm && bufNode->mType != EPSILON)
+			else if(!bufNode->getMTerm() && !bufNode->getChildren().empty()){_getUpperNode(bufNode);}
+			else if(bufNode->getMTerm() && !bufNode->getVTerm() && bufNode->getType() != EPSILON)
 			{
 				_upperNode = (Node*)bufNode;
-				std::cout << "curAnalyzed: " << sTokenTypeStrings[_upperNode->mType] << std::endl;
+				std::cout << "curAnalyzed: " << sTokenTypeStrings[_upperNode->getType()] << std::endl;
 			}
 		}
 	}
@@ -56,7 +67,8 @@ namespace Dima
 			while(j)
 			{
 				getUpperNode(); //обновление указателя на раскрываемый нетерминал
-				std::cout << sTokenTypeStrings[_upperNode->mType] << " " << sTokenTypeStrings[cToken.mType] << std::endl;
+				std::cout << sTokenTypeStrings[_upperNode->getType()] << " " << sTokenTypeStrings[cToken.getType()] 
+					<< std::endl;
 				switch(_ifMatched(_upperNode, cToken))
 				{
 					case 0:
@@ -65,7 +77,7 @@ namespace Dima
 					case 1:
 						break;
 					case 2:
-						_upperNode->vTerm = 1;
+						_upperNode->setVTerm(1);
 						j = false;
 						break;
 					case 3:
@@ -84,11 +96,11 @@ namespace Dima
 			  //it was nonterminal if 1
 			  //it was terminal if 2
 			  //success if 3
-		switch(nTerm->mType)
+		switch(nTerm->getType())
 		{
 			case END:
 				flag = 3;
-				switch(Term.mType)
+				switch(Term.getType())
 				{
 					case END:
 						break;
@@ -99,7 +111,7 @@ namespace Dima
 				break;
 			case BLACKSPACE:
 				flag = 1;
-				switch(Term.mType)
+				switch(Term.getType())
 				{
 					case LBRAC:
 					case IDENTIFIER:
@@ -115,7 +127,7 @@ namespace Dima
 				break;
 			case DNF:
 				flag = 1;
-				switch(Term.mType)
+				switch(Term.getType())
 				{
 					case LBRAC:
 						bufUncov.push_back(new Node(1, LBRAC));
@@ -136,7 +148,7 @@ namespace Dima
 				break;
 			case DNF_TMP:
 				flag = 1;
-				switch(Term.mType)
+				switch(Term.getType())
 				{
 					case DISJOINT:
 						bufUncov.push_back(new Node(1, DISJOINT));
@@ -149,7 +161,7 @@ namespace Dima
 				break;
 			case CONJ_TMP:
 				flag = 1;
-				switch(Term.mType)
+				switch(Term.getType())
 				{
 					case END:
 					case RBRAC:
@@ -166,7 +178,7 @@ namespace Dima
 				break;
 			case CONJ:
 				flag = 1;
-				switch(Term.mType)
+				switch(Term.getType())
 				{
 					case IDENTIFIER:
 					case INTEGER_LITERAL:
@@ -181,7 +193,7 @@ namespace Dima
 				break;
 			case PREDICATE:
 				flag = 1;
-				switch(Term.mType)
+				switch(Term.getType())
 				{
 					case IDENTIFIER:
 					case INTEGER_LITERAL:
@@ -200,7 +212,7 @@ namespace Dima
 				break;
 			case POLYNOM:
 				flag = 1;
-				switch(Term.mType)
+				switch(Term.getType())
 				{
 					case IDENTIFIER:
 					case INTEGER_LITERAL:
@@ -214,7 +226,7 @@ namespace Dima
 				break;
 			case ORDER:
 				flag = 1;
-				switch(Term.mType)
+				switch(Term.getType())
 				{
 					case GREATER:
 						bufUncov.push_back(new Node(1, GREATER));
@@ -229,7 +241,7 @@ namespace Dima
 				break;
 			case SUM:
 				flag = 1;
-				switch(Term.mType)
+				switch(Term.getType())
 				{
 					case END:
 					case CONJUNCT:
@@ -249,7 +261,7 @@ namespace Dima
 				break;
 			case MULT:
 				flag = 1;
-				switch(Term.mType)
+				switch(Term.getType())
 				{
 					case INTEGER_LITERAL:
 						bufUncov.push_back(new Node(0, CONST));
@@ -266,7 +278,7 @@ namespace Dima
 				break;
 			case MULT_TMP:
 				flag = 1;
-				switch(Term.mType)
+				switch(Term.getType())
 				{
 					case END:
 					case CONJUNCT:
@@ -291,10 +303,10 @@ namespace Dima
 				break;
 			case CONST:
 				flag = 1;
-				switch(Term.mType)
+				switch(Term.getType())
 				{
 					case INTEGER_LITERAL:
-						bufUncov.push_back(new Node(1, Term.mText, INTEGER_LITERAL));
+						bufUncov.push_back(new Node(1, Term.getText(), INTEGER_LITERAL));
 						break;
 					default:
 						return 0;
@@ -302,17 +314,17 @@ namespace Dima
 				}
 				break;
 			default:
-				if(nTerm->mTerm && nTerm->mType == Term.mType) return 2;
+				if(nTerm->getMTerm() && nTerm->getType() == Term.getType()) return 2;
 				return 0;
 				break;
 		}
 
-		std::cout << "Rule: ";							//немного косметической работы
-		for(int iter = 0; iter < bufUncov.size(); ++iter)			//
-		{									//
-			std::cout << sTokenTypeStrings[bufUncov[iter]->mType] << " ";	//
-		}									//
-		std::cout << std::endl << std::endl;					//
+		std::cout << "Rule: ";								//немного косметической работы
+		for(int iter = 0; iter < bufUncov.size(); ++iter)				//
+		{								 		//
+			std::cout << sTokenTypeStrings[bufUncov[iter]->getType()] << " ";	//
+		}										//
+		std::cout << std::endl << std::endl;						//
 
 		for(int iter = 0; iter < bufUncov.size(); ++iter){_addNode(bufUncov[iter]);} //заполнение потомков нетерминала
 		bufUncov.clear();
@@ -378,7 +390,7 @@ namespace Dima
 							; ++iter){curCoefficients.push_back(0 - _curLPolynom->get_coefficients()[iter]);}
 				}
 
-				switch(fromNode->getChildren()[1]->getChildren()[0]->mType) //инициализируется один из двух предикатов
+				switch(fromNode->getChildren()[1]->getChildren()[0]->getType()) //инициализируется один из двух предикатов
 				{
 					case GREATER:
 						curPredicate = new Kirill::Greater_predicate(Kirill::Polynom(curCoefficients), _negotiated);
@@ -402,17 +414,17 @@ namespace Dima
 	void parseTree::_makePolynomSpecial(const Node* fromNode, int _coef)
 	{
 		int coef = _coef; //вспомогательный коэффициент
-		switch(fromNode->getChildren()[0]->getChildren()[0]->mType) //первый всегда [MULT]
+		switch(fromNode->getChildren()[0]->getChildren()[0]->getType()) //первый всегда [MULT]
 		{
 			case IDENTIFIER:
 				++degree;
 				break;
 			case CONST:
-				coef = std::atoi(fromNode->getChildren()[0]->getChildren()[0]->getChildren()[0]->mText.c_str());
+				coef = std::atoi(fromNode->getChildren()[0]->getChildren()[0]->getChildren()[0]->getText().c_str());
 				break;
 		}
 
-		switch(fromNode->getChildren()[0]->getChildren()[1]->getChildren()[0]->mType)
+		switch(fromNode->getChildren()[0]->getChildren()[1]->getChildren()[0]->getType())
 		{
 			case EPSILON:
 				break;
@@ -435,7 +447,7 @@ namespace Dima
 		_makePolynomSpecial(fromNode, 1);
 
 		std::cout << "df" << std::endl;
-		switch(fromNode->getChildren()[1]->getChildren()[0]->mType)
+		switch(fromNode->getChildren()[1]->getChildren()[0]->getType())
 		{
 			case PLUS:
 				_makePolynom(toPolynom, fromNode->getChildren()[1]->getChildren()[1]);
