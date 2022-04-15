@@ -57,6 +57,19 @@ namespace Dima
 		_Line.push_back(Token(END)); //указатель на конец строки
 		_root = new Node(0, BLACKSPACE); //корень изначально рабочий нетерминал
 	}
+
+	parseTree::~parseTree()
+	{
+		_deleteFromNode(_root);
+	}
+
+	void parseTree::_deleteFromNode(const Node* fromNode)
+	{
+		for(const Node* curNode : fromNode->getChildren()){_deleteFromNode(curNode);}
+		delete fromNode;
+		fromNode = NULL;
+	}
+
 	void parseTree::getUpperNode(){_getUpperNode(_root);}
 	void parseTree::_addNode(const Node* addedNode){_upperNode->addChild(addedNode);}
 	void parseTree::parse()
@@ -81,7 +94,7 @@ namespace Dima
 						j = false;
 						break;
 					case 3:
-						std::cout << "SUCCESS!" << std::endl;
+						std::cout << "SUCCESS!" << std::endl << std::endl;
 						j = false;
 						break;
 				}
@@ -105,6 +118,7 @@ namespace Dima
 					case END:
 						break;
 					default:
+						_deleteFromNode(_root);
 						return 0;
 						break;
 				}
@@ -121,6 +135,7 @@ namespace Dima
 						bufUncov.push_back(new Node(0, END));
 						break;
 					default:
+						_deleteFromNode(_root);
 						return 0;
 						break;
 				}
@@ -142,6 +157,7 @@ namespace Dima
 						bufUncov.push_back(new Node(0, CONJ));
 						break;
 					default:
+						_deleteFromNode(_root);
 						return 0;
 						break;
 				}
@@ -155,6 +171,7 @@ namespace Dima
 						bufUncov.push_back(new Node(0, DNF));
 						break;
 					default:
+						_deleteFromNode(_root);
 						return 0;
 						break;
 				}
@@ -172,6 +189,7 @@ namespace Dima
 						bufUncov.push_back(new Node(0, CONJ));
 						break;
 					default:
+						_deleteFromNode(_root);
 						return 0;
 						break;
 				}
@@ -187,6 +205,7 @@ namespace Dima
 						bufUncov.push_back(new Node(0, CONJ_TMP));
 						break;
 					default:
+						_deleteFromNode(_root);
 						return 0;
 						break;
 				}
@@ -206,6 +225,7 @@ namespace Dima
 						bufUncov.push_back(new Node(0, PREDICATE));
 						break;
 					default:
+						_deleteFromNode(_root);
 						return 0;
 						break;
 				}
@@ -220,6 +240,7 @@ namespace Dima
 						bufUncov.push_back(new Node(0, SUM));
 						break;
 					default:
+						_deleteFromNode(_root);
 						return 0;
 						break;
 				}
@@ -235,6 +256,7 @@ namespace Dima
 						bufUncov.push_back(new Node(1, EQUAL));
 						break;
 					default:
+						_deleteFromNode(_root);
 						return 0;
 						break;
 				}
@@ -255,6 +277,7 @@ namespace Dima
 						bufUncov.push_back(new Node(0, POLYNOM));
 						break;
 					default:
+						_deleteFromNode(_root);
 						return 0;
 						break;
 				}
@@ -272,6 +295,7 @@ namespace Dima
 						bufUncov.push_back(new Node(0, MULT_TMP));
 						break;
 					default:
+						_deleteFromNode(_root);
 						return 0;
 						break;
 				}
@@ -297,6 +321,7 @@ namespace Dima
 						bufUncov.push_back(new Node(0, MULT));
 						break;
 					default:
+						_deleteFromNode(_root);
 						return 0;
 						break;
 				}
@@ -309,12 +334,14 @@ namespace Dima
 						bufUncov.push_back(new Node(1, Term.getText(), INTEGER_LITERAL));
 						break;
 					default:
+						_deleteFromNode(_root);
 						return 0;
 						break;
 				}
 				break;
 			default:
 				if(nTerm->getMTerm() && nTerm->getType() == Term.getType()) return 2;
+				_deleteFromNode(_root);
 				return 0;
 				break;
 		}
@@ -338,8 +365,10 @@ namespace Dima
 		switch(fromNode->getChildren()[1]->getChildren().size()) //второй потомок - всегда [CONJ_TMP]
 		{
 			case 1: //[CONJ_TMP] раскрылся в [EPSILON]
+				std::cout << "CONJ -> EPSILON" << std::endl;
 				break;
 			case 2: //[CONJ_TMP] раскрылся в [CONJUNCT][CONJ]
+				std::cout << "CONJ -> AND CONJ" << std::endl;
 				_conjuncts.push_back(_makeConjunct(fromNode->getChildren()[1]->getChildren()[1]));
 				break;
 		}
@@ -363,6 +392,7 @@ namespace Dima
 				return _makePredicate(fromNode->getChildren()[1]);
 				break;
 			case 3: //если предикат раскрылся в неравенство
+				std::cout << "Start making unequality" << std::endl;
 				Kirill::Predicate* curPredicate;
 
 				_makePolynom(_curLPolynom, fromNode->getChildren()[0]); //собираются левый и правый полиномы
@@ -405,6 +435,7 @@ namespace Dima
 				delete _curRPolynom;
 				_curLPolynom = NULL;
 				_curRPolynom = NULL;
+				std::cout << "Unequality made" << std::endl;
 				return curPredicate;
 				break;
 		}
@@ -444,9 +475,9 @@ namespace Dima
 	void parseTree::_makePolynom(Kirill::Polynom* toPolynom, const Node* fromNode) //вводится всегда в порядке убывания степени
 	{									       //[^] пока не реализован
 		int curPos{0}; //для отслеживания текущей позиции в векторе коэффициентов
+		std::cout << "Start making polynom" << std::endl;
 		_makePolynomSpecial(fromNode, 1);
 
-		std::cout << "df" << std::endl;
 		switch(fromNode->getChildren()[1]->getChildren()[0]->getType())
 		{
 			case PLUS:
@@ -470,6 +501,7 @@ namespace Dima
 			++curPos;
 		}
 		toPolynom = new Kirill::Polynom(actualCoefs);
+		std::cout << "Polynom made" << std::endl;
 		_coefficients.clear();
 	}
 
@@ -479,6 +511,7 @@ namespace Dima
 		switch(fromNode->getChildren()[0]->getChildren().size())
 		{
 			case 1: //[DNF] раскрылся в [CONJ]
+				std::cout << "In a CONJ" << std::endl;
 				_conjuncts.push_back(Kirill::Conjunct(_makeConjunct(fromNode->getChildren()[0]->getChildren()[0])));
 				break;
 			case 5: //[DNF] раскрылся в [(][CONJ][)][DISJOINT][DNF]

@@ -55,8 +55,11 @@ namespace Dima
 			Kirill::Predicate* _makePredicate(const Node* fromNode);
 			void _makePolynom(Kirill::Polynom* toPolynom, const Node* fromNode);
 			void _makePolynomSpecial(const Node* fromNode, int coef);
+
+			void _deleteFromNode(const Node* fromNode);
 		public:
 			parseTree(const std::vector<Token>& Line);
+			~parseTree();
 			void getUpperNode(); //обновление текущего вызываемого нетерминала
 			void parse(); //парсинг вектора токенов
 			void makeConjuncts(); //извлечение конъюнктов из дерева

@@ -40,16 +40,12 @@ namespace Kirill
 	Equality_predicate::Equality_predicate(Polynom polynom,bool negative) : Predicate(polynom,negative){}
 	//Деструктор для предиката равенства
 	Equality_predicate::~Equality_predicate(){}
-	//Вычисление логического значения предиката
-	//пока не реализовано
 	bool Equality_predicate::calculate(){return true;}
 	
 	//Конструктор для предиката сравнения
 	Greater_predicate::Greater_predicate(Polynom polynom, bool negative) : Predicate(polynom,negative){}
 	//Деструктор для предиката сравенния
 	Greater_predicate::~Greater_predicate(){}
-	//Вычисление логического значения предиката
-	//пока не реализовано
 	bool Greater_predicate::calculate(){return true;}
 
 	//Конструктор конъюнкта - получает вектор, состоящий из предикатов

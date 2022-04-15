@@ -4,7 +4,6 @@
 #include<algorithm>
 #include<math.h>
 #include"tarsky.hpp"
-//В этом файле лежат описания функций для работы с алгоритмом Тарского
 
 namespace Kirill
 {
@@ -92,7 +91,6 @@ namespace Kirill
 					{	
 						if (unsaturated[i].get_degree()>=unsaturated[j].get_degree())
 						{
-//							попытка отладить проскакивание констант
 //							if(unsaturated[i].get_degree()==0)
 //							{
 //								Polynom_graph[i][j]=-2;

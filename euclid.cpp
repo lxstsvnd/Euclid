@@ -12,4 +12,5 @@ int main()
 	lexer.debugPrint();
 	Dima::parseTree decision(lexer.get_tokens());
 	decision.parse();
+	//decision.makeConjuncts();
 }

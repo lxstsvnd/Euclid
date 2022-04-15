@@ -32,17 +32,7 @@ namespace Kirill
 	{
 		return _coefficients.size()-1;
 	}
-
-	void Polynom::set_point(double point)
-	{
-		_point=point;
-	}
-
-	double Polynom::get_point()
-	{
-		return _point;
-	}
-
+	
 	//Удаляет старшие нулевые коэффициенты, если многочлен это не константа
 	void Polynom::delete_zeros()
 	{
