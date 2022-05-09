@@ -12,7 +12,5 @@ int main()
 	lexer.debugPrint();
 	Dima::parseTree decision(lexer.get_tokens());
 	decision.parse();
-	decision.makeDNF();
-	Kirill::DNF dnf = decision.getDNF();
-	dnf.printPolynoms();
+	decision.makeConjuncts();
 }
