@@ -1,5 +1,9 @@
-all: euclid
-euclid: polynoms.o formulas.o euclid.o parser.o lexer.o tarsky.o
+all: euclid_server euclid_client euclid
+euclid_client: polynoms.o formulas.o euclid_client.o parser.o lexer.o tarsky.o
+	g++ polynoms.o lexer.o parser.o tarsky.o formulas.o euclid_client.o -lgmp -lgmpxx -o euclid_client
+euclid_server: polynoms.o formulas.o parser.o lexer.o tarsky.o euclid_server.o
+	g++ polynoms.o lexer.o parser.o tarsky.o formulas.o euclid_server.o -lgmp -lgmpxx -o euclid_server
+euclid: polynoms.o formulas.o parser.o lexer.o tarsky.o euclid.o
 	g++ polynoms.o lexer.o parser.o tarsky.o formulas.o euclid.o -lgmp -lgmpxx -o euclid
 parser.o: parser.cpp
 	g++ -c parser.cpp -o parser.o
@@ -12,4 +16,4 @@ polynoms.o: polynoms.cpp
 tarsky.o: tarsky.cpp
 	g++ -c tarsky.cpp -o tarsky.o
 clean:
-	rm -rf euclid1. *.o
+	rm -rf euclid. *.o
