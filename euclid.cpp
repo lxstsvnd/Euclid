@@ -9,7 +9,6 @@ int main()
 	std::string text;
 	std::getline(std::cin, text);
 	Dima::Tokenizer lexer(text);
-	lexer.debugPrint();
 	Dima::parseTree decision(lexer.get_tokens());
 	decision.parse();
 	decision.makeDNF();
