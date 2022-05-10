@@ -3,6 +3,7 @@
 namespace Kirill
 {
 	void uniquying(std::vector<Polynom>&);
+	std::vector<std::vector<int>> get_format_table(std::vector<Polynom> DNF_polynoms);
 	std::vector<Polynom> derivation_saturation(std::vector<Polynom> unsaturated);
 	std::vector<Polynom> mod_saturation(std::vector<Polynom> unsaturated);
 	std::vector<Polynom> full_saturation(std::vector<Polynom> unsaturated);

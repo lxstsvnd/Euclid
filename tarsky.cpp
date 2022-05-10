@@ -9,8 +9,38 @@
 
 namespace Kirill
 {
+	//Функция возвращает строки Таблицы тарского для насыщенной системы но оставляет только исходные многочлены
+	std::vector<std::vector<int>> get_format_table(std::vector<Polynom> DNF_polynoms)
+	{
+		std::vector<std::vector<int>> format_table(DNF_polynoms.size());
+		std::vector<Polynom> saturated = full_saturation(DNF_polynoms);
+		std::vector<std::vector<int>> table = tars_table(saturated);
+	//	Нужно отсеять таблицы только для исходных многочленов
+		std::vector<int> indexes;
+		//Можно сделать быстрее если останется время
+		for(int i = 0; i < saturated.size();i++)
+		{
+			for(int j = 0; j < DNF_polynoms.size();j++)
+			{
+				if(saturated[i]==DNF_polynoms[j])
+				{
+					indexes.push_back(i);
+				}		
+			}
+		}
+		
+		for(int i = 0; i < indexes.size(); i++)
+			format_table[i]=table[indexes[i]];
+
+		if(format_table.size()!=DNF_polynoms.size())
+			std::cout<<"ERROR,ERROR,ERROR"<<std::endl;
+
+		return format_table;
+	}
+
 	//Функция принимает некоторый вектор многочленов, возвращает насыщенную 
 	//относительно взятия производной и взятия остатка от деления систему многочленов
+	//упорядоченную по возрастанию степени
 	std::vector<Polynom> full_saturation(std::vector<Polynom> unsaturated)
 	{
 	//Насыщаем относительно взятия остатка и взятия производной, пока насыщение не перестанет добавлять новых многочленов
@@ -27,7 +57,7 @@ namespace Kirill
 			for(int i=0;i<unsaturated.size();i++)
 				if(unsaturated[i].get_degree()==0)
 					unsaturated.erase(unsaturated.begin()+i);
-		
+		degree_sort(unsaturated);
 		return unsaturated;
 	}
 
@@ -216,7 +246,7 @@ namespace Kirill
 	//Эта функция заполняет знаки в точках нового многочлена
 	void set_sign_from_rem(std::vector<std::vector<int>> &tars_table, std::vector<Polynom> &polynoms,int p, int i);
 	//Эта функция заполняет знаки в промежутках нового многочлена
-	int set_sign_from_neighbor(std::vector<std::vector<int>> &tars_table, std::vector<Polynom> &polynoms, int p,int i);
+	void set_sign_from_neighbor(std::vector<std::vector<int>> &tars_table, std::vector<Polynom> &polynoms, int p,int i);
 
 	void add_new_roots(std::vector<std::vector<int>> &t, int i, std::vector<int> new_roots);
 
@@ -445,28 +475,29 @@ namespace Kirill
 		std::cout<<std::endl;
 	}
 
-	int set_sign_from_neighbor(std::vector<std::vector<int>> &t, std::vector<Polynom> &polynoms, int p,int i)
+	//Может вызвать ошибки
+	void set_sign_from_neighbor(std::vector<std::vector<int>> &t, std::vector<Polynom> &polynoms, int p,int i)
 	{
 		//заполняем знаки интервала в зависимости от знаков соседей
 		if(t[p][i]==-1000)//для отлова ошибок	
 		{
 			t[p][i+1]=-2000;
-			return 0;
+//			return 0;
 		}
 		if(t[p][i]!=0)
 		{
 			t[p][i+1]=t[p][i];
-			return 0;
+//			return 0;
 		}
 		if(t[p][i]==0)
 		{
 			t[p][i+1]=t[p][i+2];
-			return 0;
+//			return 0;
 		}
-		if(t[p][i+2]==0)
+		if((t[p][i]==0)&&(t[p][i+2]==0))
 		{
 			t[p][i+1]=0;
-			return 0;
+//			return 0;
 		}
 
 	}

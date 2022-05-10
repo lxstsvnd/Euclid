@@ -15,4 +15,7 @@ int main()
 	decision.makeDNF();
 	Kirill::DNF dnf = decision.getDNF();
 	dnf.printPolynoms();
+	
+	std::cout<<"\n\n"<<std::endl;
+	std::cout<<dnf.decide()<<std::endl;
 }
