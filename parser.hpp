@@ -39,22 +39,29 @@ namespace Dima
 			Node* _root; //корень дерева
 			Node* _upperNode; //текущий раскрываемый нетерминал
 			std::vector<Token> _Line; //разбираемая последовательность терминалов
+			Kirill::DNF _dnf; //ДНФ, собранная из дерева
+			Kirill::Conjunct _conjunct;
+			Kirill::Greater_predicate* _grPredicate;
+			Kirill::Equality_predicate* _eqPredicate;
+			std::vector<std::pair<mpz_class, int>> _leftPolynomCoefs;
+			std::vector<std::pair<mpz_class, int>> _rightPolynomCoefs;
+			std::vector<std::pair<mpz_class, int>> _resultCoefsTMP;
+			std::vector<mpz_class> _resultCoefs;
 
-			std::vector<Kirill::Conjunct> _conjuncts{}; //конъюнкты из дерева разбора
-			Kirill::Polynom* _curLPolynom{NULL}; //текущий левый полином
-			Kirill::Polynom* _curRPolynom{NULL}; //текущий правый полином
-			bool _negotiated{false}; //по умолчанию нет отрицания
-			int degree{0}; //по умолчанию степень нулевая
-			std::vector<std::pair<mpz_class, int>> _coefficients; //вспомогательный вектор, чтобы хранить степени переменной
+			bool _negFlag{false};
+			int _degree{0};
+			mpz_class _curCoefficient{1};
+			bool _leftFlag{false}; //если левый многочлен записан
+
+			void _merge(std::vector<std::pair<mpz_class, int>> a, std::vector<std::pair<mpz_class, int>> b);
 
 			void _getUpperNode(const Node* toNode); //поиск верхнего в стеке нетерминала
 			void _addNode(const Node* addedNode); //замена раскрытого нетерминала
 			const int _ifMatched(Node* nTerm, Token Term); //анализ LL-таблицы
-			void _getConjuncts(const Node* fromNode);
-			std::vector<Kirill::Predicate*> _makeConjunct(const Node* fromNode);
-			Kirill::Predicate* _makePredicate(const Node* fromNode);
-			void _makePolynom(Kirill::Polynom* toPolynom, const Node* fromNode);
-			void _makePolynomSpecial(const Node* fromNode, int coef);
+
+			void _makeDNF(const Node* fromNode);
+			void _makeConjunct(const Node* fromNode);
+			void _makePredicate(const Node* fromNode);
 
 			void _deleteFromNode(const Node* fromNode);
 		public:
@@ -62,7 +69,7 @@ namespace Dima
 			~parseTree();
 			void getUpperNode(); //обновление текущего вызываемого нетерминала
 			void parse(); //парсинг вектора токенов
-			void makeConjuncts(); //извлечение конъюнктов из дерева
-			std::vector<Kirill::Conjunct> getConjuncts();
+			void makeDNF();
+			Kirill::DNF getDNF();
 	};
 }
