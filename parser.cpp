@@ -171,7 +171,6 @@ namespace Dima
 					case END:
 						break;
 					default:
-						_deleteFromNode(_root);
 						return 0;
 						break;
 				}
@@ -188,7 +187,6 @@ namespace Dima
 						bufUncov.push_back(new Node(0, END));
 						break;
 					default:
-						_deleteFromNode(_root);
 						return 0;
 						break;
 				}
@@ -210,7 +208,6 @@ namespace Dima
 						bufUncov.push_back(new Node(0, CONJ));
 						break;
 					default:
-						_deleteFromNode(_root);
 						return 0;
 						break;
 				}
@@ -224,7 +221,6 @@ namespace Dima
 						bufUncov.push_back(new Node(0, DNF));
 						break;
 					default:
-						_deleteFromNode(_root);
 						return 0;
 						break;
 				}
@@ -242,7 +238,6 @@ namespace Dima
 						bufUncov.push_back(new Node(0, CONJ));
 						break;
 					default:
-						_deleteFromNode(_root);
 						return 0;
 						break;
 				}
@@ -258,7 +253,6 @@ namespace Dima
 						bufUncov.push_back(new Node(0, CONJ_TMP));
 						break;
 					default:
-						_deleteFromNode(_root);
 						return 0;
 						break;
 				}
@@ -278,7 +272,6 @@ namespace Dima
 						bufUncov.push_back(new Node(0, PREDICATE));
 						break;
 					default:
-						_deleteFromNode(_root);
 						return 0;
 						break;
 				}
@@ -293,7 +286,6 @@ namespace Dima
 						bufUncov.push_back(new Node(0, SUM));
 						break;
 					default:
-						_deleteFromNode(_root);
 						return 0;
 						break;
 				}
@@ -309,7 +301,6 @@ namespace Dima
 						bufUncov.push_back(new Node(1, EQUAL));
 						break;
 					default:
-						_deleteFromNode(_root);
 						return 0;
 						break;
 				}
@@ -330,7 +321,6 @@ namespace Dima
 						bufUncov.push_back(new Node(0, POLYNOM));
 						break;
 					default:
-						_deleteFromNode(_root);
 						return 0;
 						break;
 				}
@@ -348,7 +338,6 @@ namespace Dima
 						bufUncov.push_back(new Node(0, MULT_TMP));
 						break;
 					default:
-						_deleteFromNode(_root);
 						return 0;
 						break;
 				}
@@ -374,7 +363,6 @@ namespace Dima
 						bufUncov.push_back(new Node(0, MULT));
 						break;
 					default:
-						_deleteFromNode(_root);
 						return 0;
 						break;
 				}
@@ -387,14 +375,12 @@ namespace Dima
 						bufUncov.push_back(new Node(1, Term.getText(), INTEGER_LITERAL));
 						break;
 					default:
-						_deleteFromNode(_root);
 						return 0;
 						break;
 				}
 				break;
 			default:
 				if(nTerm->getMTerm() && nTerm->getType() == Term.getType()) return 2;
-				_deleteFromNode(_root);
 				return 0;
 				break;
 		}
