@@ -40,13 +40,13 @@ namespace Dima
 			if(!bufNode->getMTerm() && bufNode->getChildren().empty())
 			{
 				_upperNode = (Node*)bufNode;
-				std::cout << "curAnalyzed: " << sTokenTypeStrings[_upperNode->getType()] << std::endl;
+//				std::cout << "curAnalyzed: " << sTokenTypeStrings[_upperNode->getType()] << std::endl;
 			}
 			else if(!bufNode->getMTerm() && !bufNode->getChildren().empty()){_getUpperNode(bufNode);}
 			else if(bufNode->getMTerm() && !bufNode->getVTerm() && bufNode->getType() != EPSILON)
 			{
 				_upperNode = (Node*)bufNode;
-				std::cout << "curAnalyzed: " << sTokenTypeStrings[_upperNode->getType()] << std::endl;
+//				std::cout << "curAnalyzed: " << sTokenTypeStrings[_upperNode->getType()] << std::endl;
 			}
 		}
 	}
@@ -100,7 +100,8 @@ namespace Dima
 		}
 		if(iter == a.size()) while(jter < b.size())
 		{
-			_resultCoefsTMP.push_back(b[jter]);
+			std::pair<mpz_class, int> tmp(-std::get<0>(b[jter]), std::get<1>(b[jter]));
+			_resultCoefsTMP.push_back(tmp);
 			++jter;
 		}
 		else while(iter < a.size())
@@ -131,8 +132,8 @@ namespace Dima
 			while(j)
 			{
 				getUpperNode(); //обновление указателя на раскрываемый нетерминал
-				std::cout << sTokenTypeStrings[_upperNode->getType()] << " " << sTokenTypeStrings[cToken.getType()] 
-					<< std::endl;
+//				std::cout << sTokenTypeStrings[_upperNode->getType()] << " " << sTokenTypeStrings[cToken.getType()] 
+//					<< std::endl;
 				switch(_ifMatched(_upperNode, cToken))
 				{
 					case 0:
@@ -146,7 +147,7 @@ namespace Dima
 						j = false;
 						break;
 					case 3:
-						std::cout << "SUCCESS!" << std::endl << std::endl;
+//						std::cout << "SUCCESS!" << std::endl << std::endl;
 						j = false;
 						break;
 				}
@@ -398,13 +399,13 @@ namespace Dima
 				break;
 		}
 
-		std::cout << "Rule: ";								//немного косметической работы
-		for(int iter = 0; iter < bufUncov.size(); ++iter)				//
-		{								 		//
-			std::cout << sTokenTypeStrings[bufUncov[iter]->getType()] << " ";	//
-		}										//
-		std::cout << std::endl << std::endl;						//
-
+//		std::cout << "Rule: ";								//немного косметической работы
+//		for(int iter = 0; iter < bufUncov.size(); ++iter)				//
+//		{								 		//
+//			std::cout << sTokenTypeStrings[bufUncov[iter]->getType()] << " ";	//
+//		}										//
+//		std::cout << std::endl << std::endl;						//
+//
 		for(int iter = 0; iter < bufUncov.size(); ++iter){_addNode(bufUncov[iter]);} //заполнение потомков нетерминала
 		bufUncov.clear();
 		return flag;
@@ -412,7 +413,7 @@ namespace Dima
 
 	void parseTree::_makePredicate(const Node* fromNode)
 	{
-		std::cout << "Trying to make predicate: " << sTokenTypeStrings[fromNode->getType()] << std::endl;
+//		std::cout << "Trying to make predicate: " << sTokenTypeStrings[fromNode->getType()] << std::endl;
 		if(!fromNode->getMTerm() && fromNode->getChildren()[0]->getType() == RESISTANCE)
 		{
 			_negFlag = true;
@@ -421,19 +422,19 @@ namespace Dima
 		else if(!fromNode->getMTerm()){for(const Node* toNode : fromNode->getChildren()){_makePredicate(toNode);}}
 		else
 		{
-			std::cout << "We are in leaf: " << sTokenTypeStrings[fromNode->getType()] << std::endl;
+//			std::cout << "We are in leaf: " << sTokenTypeStrings[fromNode->getType()] << std::endl;
 			switch(fromNode->getType())
 			{
 				case INTEGER_LITERAL:
-					std::cout << "It's integer: " << std::stoi(fromNode->getText()) << std::endl;
+//					std::cout << "It's integer: " << std::stoi(fromNode->getText()) << std::endl;
 					_curCoefficient = std::stoi(fromNode->getText());
 					break;
 				case IDENTIFIER:
-					std::cout << "It's x" << std::endl;
+//					std::cout << "It's x" << std::endl;
 					++_degree;
 					break;
 				case PLUS:
-					std::cout << "It's +" << std::endl;
+//					std::cout << "It's +" << std::endl;
 					if(!_leftFlag){_leftPolynomCoefs.push_back(std::make_pair(_curCoefficient, _degree));}
 					else{_rightPolynomCoefs.push_back(std::make_pair(_curCoefficient, _degree));}
 					_degree = 0;
@@ -441,7 +442,7 @@ namespace Dima
 					break;
 				case GREATER:
 				case EQUAL:
-					std::cout << "Left completed" << std::endl;
+//					std::cout << "Left completed" << std::endl;
 					_leftPolynomCoefs.push_back(std::make_pair(_curCoefficient, _degree));
 					_degree = 0;
 					_curCoefficient = 1;
@@ -456,7 +457,7 @@ namespace Dima
 
 	void parseTree::_makeConjunct(const Node* fromNode)
 	{
-		std::cout << "In _makeConjunct: " << sTokenTypeStrings[fromNode->getType()] << std::endl;
+//		std::cout << "In _makeConjunct: " << sTokenTypeStrings[fromNode->getType()] << std::endl;
 		switch(fromNode->getType())
 		{
 			case PREDICATE:
@@ -467,20 +468,20 @@ namespace Dima
 						_makeConjunct(fromNode->getChildren()[1]);
 						break;
 					case 3:
-						std::cout << "Predicate has been caught" << std::endl;
+//						std::cout << "Predicate has been caught" << std::endl;
 						_makePredicate(fromNode);
 						_rightPolynomCoefs.push_back(std::make_pair(_curCoefficient, _degree));
 						_curCoefficient = 1;
 						_degree = 0;
 
-						std::cout << "Predicate made" << std::endl; //эта и следующая - косметика
+//						std::cout << "Predicate made" << std::endl; //эта и следующая - косметика
 						for(std::pair<mpz_class, int> curPair : _leftPolynomCoefs)
 						{
-							std::cout << std::get<0>(curPair) << " " << std::get<1>(curPair) << std::endl;
+//							std::cout << std::get<0>(curPair) << " " << std::get<1>(curPair) << std::endl;
 						}
 						for(std::pair<mpz_class, int> curPair : _rightPolynomCoefs)
 						{
-							std::cout << std::get<0>(curPair) << " " << std::get<1>(curPair) << std::endl;
+//							std::cout << std::get<0>(curPair) << " " << std::get<1>(curPair) << std::endl;
 						}
 
 						std::sort(_leftPolynomCoefs.begin(), _leftPolynomCoefs.end(),
@@ -489,23 +490,23 @@ namespace Dima
 						std::sort(_rightPolynomCoefs.begin(), _rightPolynomCoefs.end(),
 								[](std::pair<mpz_class, int> &s1, std::pair<mpz_class, int> &s2){
 								return std::get<1>(s1) < std::get<1>(s2);});
-						std::cout << "Start merging" << std::endl;
+//						std::cout << "Start merging" << std::endl;
 						_merge(_leftPolynomCoefs, _rightPolynomCoefs);
 					
 						for(std::pair<mpz_class, int> curPair : _resultCoefsTMP)
 						{
-							std::cout << std::get<0>(curPair) << " " << std::get<1>(curPair) << std::endl;
+//							std::cout << std::get<0>(curPair) << " " << std::get<1>(curPair) << std::endl;
 						}
-						std::cout << "After merging" << std::endl;
+//						std::cout << "After merging" << std::endl;
 						for(mpz_class cur : _resultCoefs)
 						{
-							std::cout << cur << std::endl;
+//							std::cout << cur << std::endl;
 						}
 		
 						switch(fromNode->getChildren()[1]->getChildren()[0]->getType()) //проверка предиката [>] или [=]
 						{
 							case GREATER:
-								std::cout << "Greater predicate" << std::endl;
+//								std::cout << "Greater predicate" << std::endl;
 								_conjunct.add_predicate(new Kirill::Greater_predicate(
 											Kirill::Polynom(_resultCoefs), _negFlag));
 								_leftPolynomCoefs.clear();
@@ -515,7 +516,7 @@ namespace Dima
 								_negFlag = false;
 								break;
 							case EQUAL:
-								std::cout << "Equal predicate" << std::endl;
+//								std::cout << "Equal predicate" << std::endl;
 								_conjunct.add_predicate(new Kirill::Equality_predicate(Kirill::Polynom(
 												_resultCoefs), _negFlag));
 								_leftPolynomCoefs.clear();
@@ -535,14 +536,14 @@ namespace Dima
 
 	void parseTree::_makeDNF(const Node* fromNode)
 	{
-		std::cout << "Making DNF: " << sTokenTypeStrings[fromNode->getType()] << std::endl;
+//		std::cout << "Making DNF: " << sTokenTypeStrings[fromNode->getType()] << std::endl;
 		switch(fromNode->getType())
 		{
 			case CONJ:
 				_makeConjunct(fromNode); //конъюнкт выгружается в поле из private
-				std::cout << "Try to add conjunct" << std::endl;
+//				std::cout << "Try to add conjunct" << std::endl;
 				_dnf.add_conjunct(_conjunct); //конъюнкт добавляется в _dnf
-				std::cout << "Conjunct has been added" << std::endl;
+//				std::cout << "Conjunct has been added" << std::endl;
 				_conjunct.clear(); //_conjunct очищается
 				break;
 			default:
@@ -553,7 +554,7 @@ namespace Dima
 	void parseTree::makeDNF()
 	{
 		_makeDNF(_root);
-		std::cout << std::endl;
+//		std::cout << std::endl;
 	}
 	Kirill::DNF parseTree::getDNF(){return _dnf;}
 }
