@@ -25,6 +25,7 @@ namespace Kirill
 		{
 			std::cout<<_coefficients[i]<<"x^"<<i<<"+";
 		}
+		std::cout << std::endl;
 	}
 	
 	//Возвращает степень многочлена

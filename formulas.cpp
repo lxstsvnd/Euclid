@@ -51,6 +51,7 @@ namespace Kirill
 	//Конструктор конъюнкта - получает вектор, состоящий из предикатов
 	Conjunct::Conjunct(std::vector<Predicate*> predicats): _predicats(predicats) {}
 	Conjunct::Conjunct(){;}
+	void Conjunct::clear(){_predicats.clear();}
 	
 	//Вычисляет значение конъюнкта в зависимости от значения предикатов внутри
 	bool Conjunct::calculate()
@@ -67,9 +68,12 @@ namespace Kirill
 		_predicats.push_back(predicate);
 	}
 
+	std::vector<Predicate*> Conjunct::getPredicates(){return _predicats;}
+
 	//Конструктор ДНФ - получает вектор конъюнктов
 	DNF::DNF(std::vector<Conjunct> conjuncts) : _conjuncts(conjuncts){}
-	
+	DNF::DNF(){;}
+
 	//Вычисляет значение ДНФ в зависимости от значения конъюнктов внутри
 	bool DNF::calculate()
 	{
@@ -84,5 +88,16 @@ namespace Kirill
 	void DNF::add_conjunct(Conjunct conjunct)
 	{
 		_conjuncts.push_back(conjunct);
+	}
+
+	void DNF::printPolynoms()
+	{
+		for(Conjunct curConjunct : _conjuncts)
+		{
+			for(Predicate* curPredicate : curConjunct.getPredicates())
+			{
+				curPredicate->get_polynom().print();
+			}
+		}
 	}
 }

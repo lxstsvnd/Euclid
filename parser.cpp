@@ -11,7 +11,7 @@ namespace Dima
 	Node::Node(int isTerm, std::string text, enum TokenType type)
 	{
 		_mType = type;
-		_mText = std::atoi(_mText.c_str());
+		_mText = text;
 		_mTerm = isTerm;
 		_chPtr.clear();
 	}
@@ -72,6 +72,57 @@ namespace Dima
 
 	void parseTree::getUpperNode(){_getUpperNode(_root);}
 	void parseTree::_addNode(const Node* addedNode){_upperNode->addChild(addedNode);}
+
+	void parseTree::_merge(std::vector<std::pair<mpz_class, int>> a, std::vector<std::pair<mpz_class, int>> b)
+	{
+		int iter = 0; //итератор по a
+		int jter = 0; //иетартор по b
+		while(iter < a.size() && jter < b.size())
+		{
+			if(std::get<1>(a[iter]) < std::get<1>(b[jter]))
+			{
+				_resultCoefsTMP.push_back(a[iter]);
+				++iter;
+			}
+			else if(std::get<1>(a[iter]) > std::get<1>(b[jter]))
+			{
+				std::pair<mpz_class, int> tmp(-std::get<0>(b[jter]), std::get<1>(b[jter]));
+				_resultCoefsTMP.push_back(tmp);
+				++jter;
+			}
+			else
+			{
+				std::pair<mpz_class, int> tmp(- std::get<0>(b[jter]) + std::get<0>(a[iter]), std::get<1>(b[jter]));
+				_resultCoefsTMP.push_back(tmp);
+				++iter;
+				++jter;
+			}
+		}
+		if(iter == a.size()) while(jter < b.size())
+		{
+			_resultCoefsTMP.push_back(b[jter]);
+			++jter;
+		}
+		else while(iter < a.size())
+		{
+			_resultCoefsTMP.push_back(a[iter]);
+			++iter;
+		}
+		//теперь нужно добавить нули, если соответствующая степень отсутствует
+		jter = 0; //текущая степень в векторе
+		for(iter = 0; iter <= std::get<1>(_resultCoefsTMP[_resultCoefsTMP.size() - 1]); ++iter)
+		{
+			if(jter > _resultCoefsTMP.size()){break;}
+			while(iter < std::get<1>(_resultCoefsTMP[jter]))
+			{
+				_resultCoefs.push_back(0);
+				++iter;
+			}
+			_resultCoefs.push_back(std::get<0>(_resultCoefsTMP[jter]));
+			++jter;
+		}
+	}
+
 	void parseTree::parse()
 	{
 		for(const Token cToken : _Line)
@@ -85,6 +136,7 @@ namespace Dima
 				switch(_ifMatched(_upperNode, cToken))
 				{
 					case 0:
+						_deleteFromNode(_root);
 						throw std::runtime_error("Syntax error!");
 						break;
 					case 1:
@@ -358,169 +410,150 @@ namespace Dima
 		return flag;
 	}
 
-	std::vector<Kirill::Predicate*> parseTree::_makeConjunct(const Node* fromNode)
+	void parseTree::_makePredicate(const Node* fromNode)
 	{
-		std::vector<Kirill::Predicate*> curPredicates{};
-		curPredicates.push_back(_makePredicate(fromNode->getChildren()[0])); //первый потомок - всегда [PREDICATE]
-		switch(fromNode->getChildren()[1]->getChildren().size()) //второй потомок - всегда [CONJ_TMP]
+		std::cout << "Trying to make predicate: " << sTokenTypeStrings[fromNode->getType()] << std::endl;
+		if(!fromNode->getMTerm() && fromNode->getChildren()[0]->getType() == RESISTANCE)
 		{
-			case 1: //[CONJ_TMP] раскрылся в [EPSILON]
-				std::cout << "CONJ -> EPSILON" << std::endl;
-				break;
-			case 2: //[CONJ_TMP] раскрылся в [CONJUNCT][CONJ]
-				std::cout << "CONJ -> AND CONJ" << std::endl;
-				_conjuncts.push_back(_makeConjunct(fromNode->getChildren()[1]->getChildren()[1]));
-				break;
+			_negFlag = true;
+			_makePredicate(fromNode->getChildren()[1]);
 		}
-		return curPredicates;
-	}
-
-	Kirill::Predicate* parseTree::_makePredicate(const Node* fromNode)
-	{
-		switch(fromNode->getChildren().size())
+		else if(!fromNode->getMTerm()){for(const Node* toNode : fromNode->getChildren()){_makePredicate(toNode);}}
+		else
 		{
-			case 2: //если предикат раскрылся в отрицание предиката
-				switch(_negotiated) 
-				{
-					case true:
-						_negotiated = false;
-						break;
-					case false:
-						_negotiated = true;
-						break;
-				}
-				return _makePredicate(fromNode->getChildren()[1]);
-				break;
-			case 3: //если предикат раскрылся в неравенство
-				std::cout << "Start making unequality" << std::endl;
-				Kirill::Predicate* curPredicate;
-
-				_makePolynom(_curLPolynom, fromNode->getChildren()[0]); //собираются левый и правый полиномы
-				_makePolynom(_curRPolynom, fromNode->getChildren()[2]); //
-
-				std::vector<mpz_class> curCoefficients{}; //далее считается разность коэффициентов
-				if(_curLPolynom->get_coefficients().size() >= _curRPolynom->get_coefficients().size())
-				{
-					for(int iter = 0; iter < _curRPolynom->get_coefficients().size(); ++iter)
-					{
-						curCoefficients.push_back(_curLPolynom->get_coefficients()[iter] 
-								-_curRPolynom->get_coefficients()[iter]);
-					}
-					for(int iter = _curRPolynom->get_coefficients().size(); iter < _curLPolynom->get_coefficients().size()
-								; ++iter){curCoefficients.push_back(_curLPolynom->get_coefficients()[iter]);}
-				}
-				else
-				{
-					for(int iter = 0; iter < _curLPolynom->get_coefficients().size(); ++iter)
-					{
-						curCoefficients.push_back(_curLPolynom->get_coefficients()[iter]
-								-_curRPolynom->get_coefficients()[iter]);
-					}
-					for(int iter = _curLPolynom->get_coefficients().size(); iter < _curRPolynom->get_coefficients().size()
-							; ++iter){curCoefficients.push_back(0 - _curLPolynom->get_coefficients()[iter]);}
-				}
-
-				switch(fromNode->getChildren()[1]->getChildren()[0]->getType()) //инициализируется один из двух предикатов
-				{
-					case GREATER:
-						curPredicate = new Kirill::Greater_predicate(Kirill::Polynom(curCoefficients), _negotiated);
-						break;
-					case EQUAL:
-						curPredicate = new Kirill::Equality_predicate(Kirill::Polynom(curCoefficients), _negotiated);
-						break;
-				}
-
-				_negotiated = false;
-				delete _curLPolynom;
-				delete _curRPolynom;
-				_curLPolynom = NULL;
-				_curRPolynom = NULL;
-				std::cout << "Unequality made" << std::endl;
-				return curPredicate;
-				break;
-		}
-		throw std::runtime_error("aaa");
-	}
-
-	void parseTree::_makePolynomSpecial(const Node* fromNode, int _coef)
-	{
-		int coef = _coef; //вспомогательный коэффициент
-		switch(fromNode->getChildren()[0]->getChildren()[0]->getType()) //первый всегда [MULT]
-		{
-			case IDENTIFIER:
-				++degree;
-				break;
-			case CONST:
-				coef = std::atoi(fromNode->getChildren()[0]->getChildren()[0]->getChildren()[0]->getText().c_str());
-				break;
-		}
-
-		switch(fromNode->getChildren()[0]->getChildren()[1]->getChildren()[0]->getType())
-		{
-			case EPSILON:
-				break;
-			case MULT:
-				_makePolynomSpecial(fromNode->getChildren()[0]->getChildren()[1]->getChildren()[0], coef);
-				break;
-			case MULTIPLY:
-				_makePolynomSpecial(fromNode->getChildren()[0]->getChildren()[1]->getChildren()[1], coef);
-				break;
-		}
-
-		_coefficients.push_back(std::pair<mpz_class, int>{coef, degree});
-		coef = 1;
-		degree = 0;
-	}
-
-	void parseTree::_makePolynom(Kirill::Polynom* toPolynom, const Node* fromNode) //вводится всегда в порядке убывания степени
-	{									       //[^] пока не реализован
-		int curPos{0}; //для отслеживания текущей позиции в векторе коэффициентов
-		std::cout << "Start making polynom" << std::endl;
-		_makePolynomSpecial(fromNode, 1);
-
-		switch(fromNode->getChildren()[1]->getChildren()[0]->getType())
-		{
-			case PLUS:
-				_makePolynom(toPolynom, fromNode->getChildren()[1]->getChildren()[1]);
-				break;
-			case EPSILON:
-				break;
-		}
-
-		std::vector<mpz_class> actualCoefs; //вектор коэффициентов в приемлемом для конструктора виде
-		std::sort(_coefficients.begin(), _coefficients.end(), 
-				[](std::pair<mpz_class, int> &a, std::pair<mpz_class, int> &b){return std::get<1>(a) < std::get<1>(b);});
-		for(std::pair<mpz_class, int> curPair : _coefficients)
-		{
-			while(curPos < std::get<1>(curPair))
+			std::cout << "We are in leaf: " << sTokenTypeStrings[fromNode->getType()] << std::endl;
+			switch(fromNode->getType())
 			{
-				actualCoefs.push_back(0);
-				++curPos;
+				case INTEGER_LITERAL:
+					std::cout << "It's integer: " << std::stoi(fromNode->getText()) << std::endl;
+					_curCoefficient = std::stoi(fromNode->getText());
+					break;
+				case IDENTIFIER:
+					std::cout << "It's x" << std::endl;
+					++_degree;
+					break;
+				case PLUS:
+					std::cout << "It's +" << std::endl;
+					if(!_leftFlag){_leftPolynomCoefs.push_back(std::make_pair(_curCoefficient, _degree));}
+					else{_rightPolynomCoefs.push_back(std::make_pair(_curCoefficient, _degree));}
+					_degree = 0;
+					_curCoefficient = 1;
+					break;
+				case GREATER:
+				case EQUAL:
+					std::cout << "Left completed" << std::endl;
+					_leftPolynomCoefs.push_back(std::make_pair(_curCoefficient, _degree));
+					_degree = 0;
+					_curCoefficient = 1;
+					_leftFlag = true;
+					break;
+				default:
+					break;
 			}
-			actualCoefs.push_back(std::get<0>(curPair));
-			++curPos;
 		}
-		toPolynom = new Kirill::Polynom(actualCoefs);
-		std::cout << "Polynom made" << std::endl;
-		_coefficients.clear();
+
 	}
 
-	void parseTree::makeConjuncts(){_getConjuncts(_root);}
-	void parseTree::_getConjuncts(const Node* fromNode) //[BLACK] всегда раскрывается в [DNF] [END]
+	void parseTree::_makeConjunct(const Node* fromNode)
 	{
-		switch(fromNode->getChildren()[0]->getChildren().size())
+		std::cout << "In _makeConjunct: " << sTokenTypeStrings[fromNode->getType()] << std::endl;
+		switch(fromNode->getType())
 		{
-			case 1: //[DNF] раскрылся в [CONJ]
-				std::cout << "In a CONJ" << std::endl;
-				_conjuncts.push_back(Kirill::Conjunct(_makeConjunct(fromNode->getChildren()[0]->getChildren()[0])));
+			case PREDICATE:
+				switch(fromNode->getChildren().size())
+				{
+					case 2:
+						_negFlag = true;
+						_makeConjunct(fromNode->getChildren()[1]);
+						break;
+					case 3:
+						std::cout << "Predicate has been caught" << std::endl;
+						_makePredicate(fromNode);
+						_rightPolynomCoefs.push_back(std::make_pair(_curCoefficient, _degree));
+						_curCoefficient = 1;
+						_degree = 0;
+
+						std::cout << "Predicate made" << std::endl; //эта и следующая - косметика
+						for(std::pair<mpz_class, int> curPair : _leftPolynomCoefs)
+						{
+							std::cout << std::get<0>(curPair) << " " << std::get<1>(curPair) << std::endl;
+						}
+						for(std::pair<mpz_class, int> curPair : _rightPolynomCoefs)
+						{
+							std::cout << std::get<0>(curPair) << " " << std::get<1>(curPair) << std::endl;
+						}
+
+						std::sort(_leftPolynomCoefs.begin(), _leftPolynomCoefs.end(),
+								[](std::pair<mpz_class, int> &s1, std::pair<mpz_class, int> &s2){
+								return std::get<1>(s1) < std::get<1>(s2);});
+						std::sort(_rightPolynomCoefs.begin(), _rightPolynomCoefs.end(),
+								[](std::pair<mpz_class, int> &s1, std::pair<mpz_class, int> &s2){
+								return std::get<1>(s1) < std::get<1>(s2);});
+						std::cout << "Start merging" << std::endl;
+						_merge(_leftPolynomCoefs, _rightPolynomCoefs);
+					
+						for(std::pair<mpz_class, int> curPair : _resultCoefsTMP)
+						{
+							std::cout << std::get<0>(curPair) << " " << std::get<1>(curPair) << std::endl;
+						}
+						std::cout << "After merging" << std::endl;
+						for(mpz_class cur : _resultCoefs)
+						{
+							std::cout << cur << std::endl;
+						}
+		
+						switch(fromNode->getChildren()[1]->getChildren()[0]->getType()) //проверка предиката [>] или [=]
+						{
+							case GREATER:
+								std::cout << "Greater predicate" << std::endl;
+								_conjunct.add_predicate(new Kirill::Greater_predicate(
+											Kirill::Polynom(_resultCoefs), _negFlag));
+								_leftPolynomCoefs.clear();
+								_rightPolynomCoefs.clear();
+								_resultCoefsTMP.clear();
+								_resultCoefs.clear();
+								_negFlag = false;
+								break;
+							case EQUAL:
+								std::cout << "Equal predicate" << std::endl;
+								_conjunct.add_predicate(new Kirill::Equality_predicate(Kirill::Polynom(
+												_resultCoefs), _negFlag));
+								_leftPolynomCoefs.clear();
+								_rightPolynomCoefs.clear();
+								_resultCoefsTMP.clear();
+								_resultCoefs.clear();
+								_negFlag = false;
+								break;
+						}
+						break;
+				}
 				break;
-			case 5: //[DNF] раскрылся в [(][CONJ][)][DISJOINT][DNF]
-				_conjuncts.push_back(Kirill::Conjunct(_makeConjunct(fromNode->getChildren()[0]->getChildren()[1])));
-				_getConjuncts(fromNode->getChildren()[0]->getChildren()[4]);
-				break;
+			default:
+				for(const Node* toNode : fromNode->getChildren()){_makeConjunct(toNode);}
 		}
 	}
-	
-	std::vector<Kirill::Conjunct> parseTree::getConjuncts(){return _conjuncts;}
-}
 
+	void parseTree::_makeDNF(const Node* fromNode)
+	{
+		std::cout << "Making DNF: " << sTokenTypeStrings[fromNode->getType()] << std::endl;
+		switch(fromNode->getType())
+		{
+			case CONJ:
+				_makeConjunct(fromNode); //конъюнкт выгружается в поле из private
+				std::cout << "Try to add conjunct" << std::endl;
+				_dnf.add_conjunct(_conjunct); //конъюнкт добавляется в _dnf
+				std::cout << "Conjunct has been added" << std::endl;
+				_conjunct.clear(); //_conjunct очищается
+				break;
+			default:
+				for(const Node* toNode : fromNode->getChildren()){_makeDNF(toNode);}
+		}
+	}
+
+	void parseTree::makeDNF()
+	{
+		_makeDNF(_root);
+		std::cout << std::endl;
+	}
+	Kirill::DNF parseTree::getDNF(){return _dnf;}
+}

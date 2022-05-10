@@ -139,7 +139,7 @@ namespace Dima
 					break;
 			}
 		}
-		endToken();
+		if(_cToken.getType() != IDENTIFIER){endToken();}
 	}
 
 	std::vector<Token> Tokenizer::get_tokens(){return _tokens;}

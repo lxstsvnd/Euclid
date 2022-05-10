@@ -49,8 +49,10 @@ namespace Kirill
 	public:
 		Conjunct(std::vector<Predicate*> predicats);
 		Conjunct();
+		void clear();
 		bool calculate();
 		void add_predicate(Predicate *);
+		std::vector<Predicate*> getPredicates(); //для Димасика
 	};
 
 	class DNF
@@ -59,7 +61,9 @@ namespace Kirill
 		std::vector<Conjunct> _conjuncts;
 	public:
 		DNF(std::vector<Conjunct> conjuncts);
+		DNF();
 		bool calculate();
 		void add_conjunct(Conjunct);
+		void printPolynoms(); //для Димасика
 	};
 }
