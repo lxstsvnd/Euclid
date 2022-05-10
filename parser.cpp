@@ -475,17 +475,17 @@ namespace Dima
 						_degree = 0;
 						for(int iter = 0; iter < _rightPolynomCoefs.size(); ++iter)
 						{
-							std::cout << "!" << std::get<0>(_rightPolynomCoefs[iter]) << "!" << std::endl;
+//							std::cout << "!" << std::get<0>(_rightPolynomCoefs[iter]) << "!" << std::endl;
 						}
 
-						std::cout << "Predicate made" << std::endl; //эта и следующая - косметика
+//						std::cout << "Predicate made" << std::endl; //эта и следующая - косметика
 						for(std::pair<mpz_class, int> curPair : _leftPolynomCoefs)
 						{
-							std::cout << std::get<0>(curPair) << " " << std::get<1>(curPair) << std::endl;
+//							std::cout << std::get<0>(curPair) << " " << std::get<1>(curPair) << std::endl;
 						}
 						for(std::pair<mpz_class, int> curPair : _rightPolynomCoefs)
 						{
-							std::cout << std::get<0>(curPair) << " " << std::get<1>(curPair) << std::endl;
+//							std::cout << std::get<0>(curPair) << " " << std::get<1>(curPair) << std::endl;
 						}
 
 						std::sort(_leftPolynomCoefs.begin(), _leftPolynomCoefs.end(),
@@ -494,19 +494,19 @@ namespace Dima
 						std::sort(_rightPolynomCoefs.begin(), _rightPolynomCoefs.end(),
 								[](std::pair<mpz_class, int> &s1, std::pair<mpz_class, int> &s2){
 								return std::get<1>(s1) < std::get<1>(s2);});
-						std::cout << "Start merging" << std::endl;
+//						std::cout << "Start merging" << std::endl;
 						_merge(_leftPolynomCoefs, _rightPolynomCoefs);
 					
 						for(std::pair<mpz_class, int> curPair : _resultCoefsTMP)
 						{
-							std::cout << std::get<0>(curPair) << " " << std::get<1>(curPair) << std::endl;
+//							std::cout << std::get<0>(curPair) << " " << std::get<1>(curPair) << std::endl;
 						}
-						std::cout << "After merging" << std::endl;
+//						std::cout << "After merging" << std::endl;
 						for(mpz_class cur : _resultCoefs)
 						{
-							std::cout << cur << std::endl;
+//							std::cout << cur << std::endl;
 						}
-						std::cout << std::endl;
+//						std::cout << std::endl;
 		
 						switch(fromNode->getChildren()[1]->getChildren()[0]->getType()) //проверка предиката [>] или [=]
 						{
