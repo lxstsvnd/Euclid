@@ -108,12 +108,19 @@ namespace Dima
 					endToken();
 					break;
 				case 'x':
-					if(!_cToken.getText().empty()){endToken();}
-					_cToken.setType(IDENTIFIER);
-					_cToken.textPush('x');
-					endToken();
-					_cToken.setType(IDENTIFIER);
-					break;
+                                        if(!_cToken.getText().empty() && _cToken.getText() != "-"){endToken();}
+                                        else if(_cToken.getText() == "-")
+                                        {
+                                                _cToken.setType(INTEGER_LITERAL);
+                                                _cToken.textPush('1');
+                                                endToken();
+                                        }
+                                        _cToken.setType(IDENTIFIER);
+                                        _cToken.textPush('x');
+                                        endToken();
+                                        _cToken.setType(IDENTIFIER);
+                                        break;
+
 				case '-': //x-c -> [x] [+] [-c]
 					if(_cToken.getType() != WHITESPACE)
 					{
