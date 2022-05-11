@@ -1,26 +1,26 @@
 #include "parser.hpp"
 #include "lexer.hpp"
-#include "formulas.hpp"
+#include "formulas_server.hpp"
 #include "polynoms.hpp"
-#include "tarsky.hpp"
+#include "tarsky_server.hpp"
 
 #include <unistd.h>
-#include <sys/types.h>	
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <sys/time.h>
 #include <sys/wait.h>
 #include <fcntl.h>
 
-#define LOCAL_PORT 5522
+#define LOCAL_PORT 9887
 #define LOCAL_ADDR INADDR_ANY
-#define SLEEP_TIMEOUT 5
+#define CONNECT_TIMEOUT 5
 
 int main()
 {
-	//подготовка к работе сервера
+        //подготовка к работе сервера
         int sockListener;
-	char message[] = "Hello, World!\n";
+        char message[] = "Hello, World!\n";
         char buffer[sizeof(message)];
         struct sockaddr_in addr;
         sockListener = socket(AF_INET, SOCK_STREAM, 0);
@@ -28,9 +28,9 @@ int main()
         {
                 throw std::runtime_error("Error while building listener");
         }
-	fcntl(sockListener, F_SETFL, O_NONBLOCK);
+        fcntl(sockListener, F_SETFL, O_NONBLOCK);
 
-        //заполнение полей адреса и привязка слушающего сокета
+        //заполнение полей адреса и привязка неблокирующего слушающего сокета
         addr.sin_family = AF_INET;
         addr.sin_port = htons(LOCAL_PORT);
         addr.sin_addr.s_addr = htonl(LOCAL_ADDR);
@@ -39,47 +39,24 @@ int main()
                 throw std::runtime_error("Error while binding listener");
         }
 
-	//сессия инициализации клиентов:
-	//в дочернем процессе запускается таймер,
-	//в это время родительский процесс устанаваливает соединения
-	std::vector<int> fd;
-	listen(sockListener, 1);
-	pid_t pid = fork();
-	switch(pid)
-	{
-		case -1:
-			throw std::runtime_error("Error while forking");
-		case 0:
-			sleep(SLEEP_TIMEOUT);
-			std::cout << "exited" << std::endl;
-			_exit(0);
-		default:
-			while(true)
-			{
-				//ожидание завершения таймера
-				int status;
-				waitpid(pid, &status, WNOHANG);
-				std::cout << status << std::endl;
-				std::cout << WIFEXITED(status) << std::endl;
-				if(WIFEXITED(status))
-				{
-					break;
-				}
-				std::cout << "accepting" << std::endl;
+        //сессия инициализации клиентов:
+        //до наступления момента CONNECT_TIMEOUT
+        //сокет пытается принять клиентов
+        std::vector<int> fd;
+        listen(sockListener, 1);
+        for(int timeCounter = 0; timeCounter < CONNECT_TIMEOUT + 1; ++timeCounter)
+        {
+                std::cout << timeCounter << std::endl;
+                int sockReceive = accept(sockListener, NULL, NULL);
+                if(sockReceive >= 0)
+                {
+                        fd.push_back(sockReceive);
+                }
+                sleep(1);
+        }
 
-				//подключение клиентов
-				int sockReceive = accept(sockListener, NULL, NULL);
-				std::cout << sockReceive << std::endl;
-				//клиент добавляется в вектор клиентов
-				if(sockReceive >= 0)
-				{
-					fd.push_back(sockReceive);
-				}
-			}
-	}
-
-	std::cout << fd.size() << std::endl;
-	//токенизация и синтаксический анализ ввода
+        std::cout << "Server is ready to work" << std::endl;
+        //токенизация и синтаксический анализ ввода
         std::string text;
         std::getline(std::cin, text);
         Dima::Tokenizer lexer(text);
@@ -87,17 +64,22 @@ int main()
         Dima::parseTree decision(lexer.get_tokens());
         decision.parse();
 
-	//извлечение ДНФ из дерева разбора
+        //извлечение ДНФ из дерева разбора
         decision.makeDNF();
         Kirill::DNF dnf = decision.getDNF();
         dnf.printPolynoms();
 
-	//организация распределенных вычислений
-//	while(true)
-//	{
-//		for(int iter = 0; iter < fd.size(); ++iter)
-//		{
-//			send(fd[iter], message, sizeof(message), 0);
-//		}
-//	}
+	//вычисления
+	std::cout<<"\n\n"<<std::endl;
+	std::cout<<dnf.decide(fd, sockListener)<<std::endl;
+
+	//завершение работы сервера
+	for(int iter = 0; iter < fd.size(); ++iter)
+	{
+		close(fd[iter]);
+	}
+	close(sockListener);
+	std::cout << "Server is shutting down" << std::endl;
 }
+
+

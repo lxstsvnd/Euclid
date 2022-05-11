@@ -1,19 +1,21 @@
-all: euclid_server euclid_client euclid
-euclid_client: polynoms.o formulas.o euclid_client.o parser.o lexer.o tarsky.o
-	g++ polynoms.o lexer.o parser.o tarsky.o formulas.o euclid_client.o -lgmp -lgmpxx -o euclid_client
-euclid_server: polynoms.o formulas.o parser.o lexer.o tarsky.o euclid_server.o
-	g++ polynoms.o lexer.o parser.o tarsky.o formulas.o euclid_server.o -lgmp -lgmpxx -o euclid_server
-euclid: polynoms.o formulas.o parser.o lexer.o tarsky.o euclid.o
-	g++ polynoms.o lexer.o parser.o tarsky.o formulas.o euclid.o -lgmp -lgmpxx -o euclid
+all: euclid_server euclid_client
+euclid_client: polynoms.o formulas_client.o euclid_client.o tarsky_client.o
+	g++ polynoms.o tarsky_client.o formulas_client.o euclid_client.o -lgmp -lgmpxx -o euclid_client
+euclid_server: polynoms.o formulas_server.o parser.o lexer.o tarsky_server.o euclid_server.o
+	g++ polynoms.o lexer.o parser.o tarsky_server.o formulas_server.o euclid_server.o -lgmp -lgmpxx -o euclid_server
 parser.o: parser.cpp
 	g++ -c parser.cpp -o parser.o
 lexer.o: lexer.cpp
 	g++ -c lexer.cpp -o lexer.o
-formulas.o: formulas.cpp
-	g++ -c formulas.cpp -o formulas.o
+formulas_server.o: formulas_server.cpp
+	g++ -c formulas_server.cpp -o formulas_server.o
+formulas_client.o: formulas_client.cpp
+	g++ -c formulas_client.cpp -o formulas_client.o
 polynoms.o: polynoms.cpp
 	g++ -c polynoms.cpp -o polynoms.o
-tarsky.o: tarsky.cpp
-	g++ -c tarsky.cpp -o tarsky.o
+tarsky_server.o: tarsky_server.cpp
+	g++ -c tarsky_server.cpp -o tarsky_server.o
+tarsky_client.o: tarsky_client.cpp
+	g++ -c tarsky_client.cpp -o tarsky_client.o
 clean:
-	rm -rf euclid. *.o
+	rm -rf serverclient. *.o
