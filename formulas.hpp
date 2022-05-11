@@ -29,6 +29,7 @@ namespace Kirill
 	class Equality_predicate : public Predicate
 	{
 	public:
+		Equality_predicate();
 		Equality_predicate(Polynom polynom,bool negative);
 		bool calculate(std::vector<int> &column, std::vector<Polynom> &DNF_polynoms) override;
 		~Equality_predicate();	
@@ -37,6 +38,7 @@ namespace Kirill
 	class Greater_predicate : public Predicate
 	{
 	public:
+		Greater_predicate();
 		Greater_predicate(Polynom polynom, bool negative);
 		bool calculate(std::vector<int> &column, std::vector<Polynom> &DNF_polynoms) override;
 		~Greater_predicate();
@@ -53,6 +55,7 @@ namespace Kirill
 		bool calculate(std::vector<int> &column, std::vector<Polynom> &DNF_polynoms);
 		void add_predicate(Predicate *);
 		std::vector<Predicate*> getPredicates(); //для Димасика
+		~Conjunct();
 	};
 
 	class DNF
@@ -66,5 +69,6 @@ namespace Kirill
 		bool decide();
 		void add_conjunct(Conjunct);
 		void printPolynoms(); //для Димасика
+		~DNF();
 	};
 }

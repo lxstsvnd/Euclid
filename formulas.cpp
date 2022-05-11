@@ -38,6 +38,7 @@ namespace Kirill
 
 	//Конструктор для предиката равенства
 	Equality_predicate::Equality_predicate(Polynom polynom,bool negative) : Predicate(polynom,negative){}
+	Equality_predicate::Equality_predicate(){}
 	//Деструктор для предиката равенства
 	Equality_predicate::~Equality_predicate(){}
 	bool Equality_predicate::calculate(std::vector<int>& column, std::vector<Polynom> &DNF_polynoms)
@@ -61,6 +62,7 @@ namespace Kirill
 	
 	//Конструктор для предиката сравнения
 	Greater_predicate::Greater_predicate(Polynom polynom, bool negative) : Predicate(polynom,negative){}
+	Greater_predicate::Greater_predicate(){}
 	//Деструктор для предиката сравенния
 	Greater_predicate::~Greater_predicate(){}
 	bool Greater_predicate::calculate(std::vector<int>& column, std::vector<Polynom> &DNF_polynoms)
@@ -115,6 +117,8 @@ namespace Kirill
 	}
 
 	std::vector<Predicate*> Conjunct::getPredicates(){return _predicats;}
+	Conjunct::~Conjunct(){}
+
 
 	//Конструктор ДНФ - получает вектор конъюнктов
 	DNF::DNF(std::vector<Conjunct> conjuncts) : _conjuncts(conjuncts){}
@@ -135,9 +139,25 @@ namespace Kirill
 		std::vector<Polynom> DNF_polynoms;	//Здесь лежат все многочлены из ДНФ
 		std::vector<std::vector<int>> table;	//Сюда будет записана таблица Тарского
 
+		std::cout<<"alive"<<std::endl;
+
+		this->printPolynoms();
+
 		for(Conjunct curConjunct : _conjuncts)
+		{
+			std::cout<<"alive1"<<std::endl;
 			for(Predicate* curPredicate : curConjunct.getPredicates())
+			{
+				curPredicate->get_polynom().print();
+				std::cout<<"alive2"<<std::endl;
 				DNF_polynoms.push_back(curPredicate->get_polynom());
+			}
+		}
+
+		std::cout<<"alive"<<std::endl;
+
+
+
 		uniquying(DNF_polynoms);		//Оставим только уникальные многочлены
 		degree_sort(DNF_polynoms);		//Отсортируем многочлены в соотв. с таблицей
 		table=get_format_table(DNF_polynoms);	
@@ -184,4 +204,5 @@ namespace Kirill
 			}
 		}
 	}
+	DNF::~DNF(){}
 }
