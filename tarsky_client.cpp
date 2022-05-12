@@ -3,12 +3,128 @@
 #include<set>
 #include<algorithm>
 #include<math.h>
+#include <cstring>
 #include"tarsky_client.hpp"
 
 //В этом файле описаны функции для работы с алгоритмом Тарского
 
 namespace Kirill
 {
+	std::vector<Polynom> part_polynom_matrix_calculation(std::vector<std::vector<int>> &Polynom_graph, std::vector<Polynom> unsaturated, int sock);
+
+	void calculate(int sock)
+	{
+		while(true)
+		{
+			std::cout << "a" << std::endl;
+			//получение таблицы от сервера
+			std::vector<std::vector<int>> table;
+			std::vector<int> column;
+			char message[] = "ready";
+			while(true)
+			{
+				char buffer[1024];
+				std::cout << "b" << std::endl;
+				int bytesRead = recv(sock, buffer, 1024, 0);
+				std::cout << buffer << std::endl;
+				if(bytesRead <= 0)
+				{
+					break;
+				}
+
+				if(!strcmp(buffer, "finish"))
+				{
+					std::cout << "added column" << std::endl;
+					if(!column.empty())
+					{
+						table.push_back(column);
+						column.clear();
+					}
+				}
+				if(!strcmp(buffer, "end"))
+				{
+					if(!column.empty())
+					{
+						table.push_back(column);
+						column.clear();
+					}
+					break;
+				}
+				else
+				{
+					column.push_back(std::atoi(buffer));
+				}
+				send(sock, message, sizeof(message), 0);
+			}
+			std::cout << "got table" << std::endl;
+			send(sock, message, sizeof(message), 0);
+
+			//получение вектора многочленов от сервера
+			std::vector<Polynom> unsaturated;
+			std::vector<mpz_class> coefs;
+			while(true)
+			{
+				char message[] = "ready";
+				char buffer[1024];
+				memset(buffer, 0, 1024);
+				int bytesRead = recv(sock, buffer, 1024, 0);
+				std::cout << buffer << std::endl;
+				if(bytesRead <= 0)
+				{
+					break;
+				}
+
+				if(!strcmp(buffer, "finish"))
+				{
+					std::cout << "added polynom" << std::endl;
+					if(!coefs.empty())
+					{
+						Polynom tmpPoly(coefs);
+						unsaturated.push_back(tmpPoly);
+						coefs.clear();
+					}
+				}
+				if(!strcmp(buffer, "end"))
+				{
+					if(!coefs.empty())
+					{
+						Polynom tmpPoly(coefs);
+						unsaturated.push_back(tmpPoly);
+						coefs.clear();
+					}
+					break;
+				}
+				else
+				{
+					coefs.push_back(mpz_class(buffer));
+				}
+				send(sock, message, sizeof(message), 0);
+			}
+			std::cout << "got polynoms" << std::endl;
+			send(sock, message, sizeof(message), 0);
+
+			//запуск насыщения системы
+			std::vector<Polynom> saturated = part_polynom_matrix_calculation(table, unsaturated, sock);
+			std::cout << "saturated" << std::endl;
+
+			//вектор многочленов возвращается на сервер
+			for(int polyIter = 0; polyIter < saturated.size(); ++polyIter)
+			{
+				char buffer[1024];
+				std::vector<mpz_class> coefs = saturated[polyIter].get_coefficients();
+				for(int coefIter = 0; coefIter < coefs.size(); ++coefIter)
+				{
+					std::string tmp = coefs[coefIter].get_str();
+					send(sock, tmp.c_str(), tmp.size(), 0);
+					recv(sock, buffer, 1024, 0);
+				}
+				send(sock, "finish\0", 7, 0);
+				recv(sock, buffer, 1024, 0);
+			}
+			std::cout << "sent" << std::endl;
+		}
+	}
+
 	//Функция возвращает строки Таблицы тарского для насыщенной системы но оставляет только исходные многочлены
 	std::vector<std::vector<int>> get_format_table(std::vector<Polynom> DNF_polynoms)
 	{
@@ -91,15 +207,15 @@ namespace Kirill
 	//Принимает матрицу остатков, вектор многочленов и координаты левого верхного и правого нижнего опорного элемента матрицы
 	//Возвращает вектор остатков от деления многочленов в заданном промежутке
 
-	std::vector<Polynom> part_polynom_matrix_calculation(std::vector<std::vector<int>> &Polynom_graph, std::vector<Polynom> unsaturated, int left_up_x, int left_up_y,int right_down_x, int right_down_y)
+	std::vector<Polynom> part_polynom_matrix_calculation(std::vector<std::vector<int>> &Polynom_graph, std::vector<Polynom> unsaturated, int sock)
 	{
 		std::vector<Polynom> raw_polynoms;
 		Polynom C;
 	
 		//непосредственное насыщение
-		for(int i=left_up_y;i<right_down_y;i++)
+		for(int i=0;i<Polynom_graph.size();i++)
 		{
-			for(int j =left_up_x;j<right_down_x;j++)
+			for(int j =0;j<Polynom_graph.size();j++)
 			{
 				if(Polynom_graph[i][j]==0)//если мы еще не пытались делить i многочлен на j
 				{	
@@ -168,7 +284,7 @@ namespace Kirill
 				Polynom_graph[i][i]=1;
 	
 			//Добавляем многочлены-остатки
-			raw_polynoms=part_polynom_matrix_calculation(Polynom_graph,unsaturated, 0,0,Polynom_graph.size(),Polynom_graph.size());			
+//			raw_polynoms=part_polynom_matrix_calculation(Polynom_graph,unsaturated);			
 	
 			for(int i =0;i<raw_polynoms.size();i++)
 				unsaturated.push_back(raw_polynoms[i]);

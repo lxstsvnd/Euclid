@@ -91,56 +91,102 @@ namespace Kirill
 	//Принимает матрицу остатков, вектор многочленов и координаты левого верхного и правого нижнего опорного элемента матрицы
 	//Возвращает вектор остатков от деления многочленов в заданном промежутке
 
-	std::vector<Polynom> part_polynom_matrix_calculation(std::vector<std::vector<int>> &Polynom_graph, std::vector<Polynom> unsaturated, int left_up_x, int left_up_y,int right_down_x, int right_down_y)
+	std::vector<Polynom> part_polynom_matrix_calculation(std::vector<std::vector<int>> &Polynom_graph, std::vector<Polynom> unsaturated, int left_up_x, int left_up_y,int right_down_x, int right_down_y, std::vector<int> fd, int sockListener)
 	{
-		std::vector<Polynom> raw_polynoms;
-		Polynom C;
-	
-		//непосредственное насыщение
-		for(int i=left_up_y;i<right_down_y;i++)
-		{
-			for(int j =left_up_x;j<right_down_x;j++)
-			{
-				if(Polynom_graph[i][j]==0)//если мы еще не пытались делить i многочлен на j
-				{	
-					if (unsaturated[i].get_degree()>=unsaturated[j].get_degree())
-					{
-						//Если степень первого больше степени второго, то поставим пометки в массиве
-						Polynom_graph[i][j]=1;
-						Polynom_graph[j][i]=-1;
-	
-						C=divide(unsaturated[i],unsaturated[j]).first;
-						if(C.get_degree()>0)
-						{
-							raw_polynoms.push_back(C);
-							//так-же нужно добавить отрицание многочлена для деления j на i
-							std::vector<mpz_class> negative_c=C.get_coefficients();
-							for(int k=0;k<negative_c.size();k++)
-								negative_c[k]=-negative_c[k];
-							raw_polynoms.push_back(Polynom(negative_c));
-	
-						}
-					}
-					else
-					{
-						Polynom_graph[i][j]=-1;
-						Polynom_graph[j][i]=1;
-						C=divide(unsaturated[j],unsaturated[i]).first;
-						if(C.get_degree()>0)
-						{
-							raw_polynoms.push_back(C);
-							//так-же нужно добавить отрицание многочлена для деления i на j
-							std::vector<mpz_class> negative_c=C.get_coefficients();
-							for(int k=0;k<negative_c.size();k++)
-								negative_c[k]=-negative_c[k];
-							raw_polynoms.push_back(Polynom(negative_c));
-						}
-					}
-				}			
-			}
-		}
-		return raw_polynoms;
+        	for(int fdIter = 0; fdIter < fd.size(); ++fdIter)
+        	{
+			char buffer1[1024];
+			char buffer2[1024];
+                	//рассылка таблицы по всем клиентам
+                        //таблица отправляется по столбцам
+ 	                for(int columnIter = left_up_x; columnIter < right_down_x; ++columnIter)
+                        {
+				char buffer[1024];
+                        	for(int rowIter = left_up_y; rowIter < right_down_y; ++rowIter)
+                                {
+                	                std::string tmp = std::to_string(Polynom_graph[columnIter][rowIter]);
+                                        send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
+					recv(fd[fdIter], buffer, 1024, 0);
+                                }
+				send(fd[fdIter], "finish\0", 7, 0);
+				recv(fd[fdIter], buffer, 1024, 0);
+                        }
+			send(fd[fdIter], "end\0", 4, 0);
+			recv(fd[fdIter], buffer1, 1024, 0);
 
+			std::cout << "table sent" << std::endl;
+			//отправка вектора многочленов по клиентам
+			//отправляются коэффициенты, многочлен
+			//собирается на месте
+			for(int polyIter = 0; polyIter < unsaturated.size(); ++polyIter)
+			{
+				char buffer[1024];
+				std::vector<mpz_class> coefs = unsaturated[polyIter].get_coefficients();
+				for(int coefIter = 0; coefIter < coefs.size(); ++coefIter)
+				{
+					std::string tmp = coefs[coefIter].get_str();
+					send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
+					recv(fd[fdIter], buffer, 1024, 0);
+				}
+				send(fd[fdIter], "finish\0", 7, 0);
+				recv(fd[fdIter], buffer, 1024, 0);
+			}
+			send(fd[fdIter], "end\0", 4, 0);
+			recv(fd[fdIter], buffer2, 1024, 0);
+
+			std::cout << "polynom sent" << std::endl;
+                }
+
+		//многочлены собираются обратно и записываются в raw_polynoms
+		std::vector<Polynom> raw_polynoms;
+		std::vector<mpz_class> coefs;
+		std::cout << "start writing polynoms" << std::endl;
+		for(int fdIter = 0; fdIter < fd.size(); ++fdIter)
+		{
+			char message[] = "ready";
+			while(true)
+			{
+				char buffer[1024];
+				std::cout << "waiting" << std::endl;
+				int bytesRead = recv(fd[fdIter], buffer, 1024, 0);
+				if(bytesRead <= 0)
+				{
+					break;
+				}
+
+				if(!strcmp(buffer, "finish"))
+				{
+					if(!coefs.empty())
+					{
+						Polynom tmpPoly(coefs);
+						raw_polynoms.push_back(tmpPoly);
+						coefs.clear();
+					}
+				}
+				if(!strcmp(buffer, "end"))
+				{
+					if(!coefs.empty())
+					{
+						Polynom tmpPoly(coefs);
+						raw_polynoms.push_back(tmpPoly);
+						coefs.clear();
+					}
+					break;
+				}
+				else
+				{
+					std::cout << buffer << std::endl;
+					coefs.push_back(mpz_class(buffer));
+					std::cout << "written" << std::endl;
+				}
+				send(fd[fdIter], message, sizeof(message), 0);
+			}
+			send(fd[fdIter], message, sizeof(message), 0);
+		}
+		
+		std::cout << "polynoms got" << std::endl;
+
+		return raw_polynoms;
 	}
 
 	//Функция принимает некоторый вектор многочленов и возращает относительно взятия остатков систему многочленов
@@ -159,6 +205,8 @@ namespace Kirill
 	
 		for(int i=0;i<size;i++)
 			Polynom_graph.push_back(matrix_null_column);
+
+		int diff = Polynom_graph.size();
 		
 		//Непосредственное замыкание
 		while (1)
@@ -168,18 +216,28 @@ namespace Kirill
 				Polynom_graph[i][i]=1;
 	
 			//Добавляем многочлены-остатки
-			raw_polynoms=part_polynom_matrix_calculation(Polynom_graph,unsaturated, 0,0,Polynom_graph.size(),Polynom_graph.size());			
-
-			//Вектор многочленов делится между клиентами,
-			//клиенты выполняют насыщение и присылают результат
-			char message[] = "Hello, world!\n";
-			for(int iter = 0; iter < fd.size(); ++iter)
+			if(Polynom_graph.size() == diff)
 			{
-				send(fd[iter], message, sizeof(message), 0);
+				raw_polynoms=part_polynom_matrix_calculation(Polynom_graph,unsaturated, 0,0,Polynom_graph.size(),Polynom_graph.size(), fd, sockListener);
+				for(int i = 0; i < raw_polynoms.size(); i++)
+				{
+					unsaturated.push_back(raw_polynoms[i]);
+				}
 			}
-
-			for(int i =0;i<raw_polynoms.size();i++)
-				unsaturated.push_back(raw_polynoms[i]);
+			else
+			{
+				raw_polynoms=part_polynom_matrix_calculation(Polynom_graph, unsaturated, Polynom_graph.size()-diff, 0, Polynom_graph.size(), Polynom_graph.size()-diff, fd, sockListener);
+				for(int i = 0; i < raw_polynoms.size(); i++)
+				{
+					unsaturated.push_back(raw_polynoms[i]);
+				}
+				raw_polynoms=part_polynom_matrix_calculation(Polynom_graph, unsaturated, 0, Polynom_graph.size()-diff, Polynom_graph.size(), Polynom_graph.size(), fd, sockListener);
+				for(int i = 0; i < raw_polynoms.size(); i++)
+				{
+					unsaturated.push_back(raw_polynoms[i]);
+				}
+			}
+			std::cout << "unique" << std::endl;
 			uniquying(unsaturated);//оставляем только уникальные
 	
 			//удаляем константы
@@ -188,7 +246,7 @@ namespace Kirill
 					unsaturated.erase(unsaturated.begin()+i);
 	
 			//Расширяем граф добавляя места для маркеров деления новых многочленов
-			double diff=unsaturated.size()-size;//разница в размере графа
+			diff=unsaturated.size()-size;//разница в размере графа
 			std::vector<int> null_column(unsaturated.size(),0);//столбец из нулей
 	
 			//добавляем нули к уже существующим столбцам
