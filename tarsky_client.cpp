@@ -16,6 +16,7 @@ namespace Kirill
 	{
 		//для записи полученных от сервера объектов нужны буферы
 		char buffer[1024];
+		std::vector<Polynom> unsaturated;
 
 		//пока вычисление не будет доведено до конца,
 		//клиент повторяет цикл вычислений
@@ -65,7 +66,6 @@ namespace Kirill
 			send(sock, "ready\0", 6, 0);
 
 			//получение вектора многочленов от сервера
-			std::vector<Polynom> unsaturated;
 			std::vector<mpz_class> coefs;
 			while(true)
 			{
@@ -152,6 +152,12 @@ namespace Kirill
 						if(C.get_degree()>0)
 						{
 							raw_polynoms.push_back(C);
+							std::vector<mpz_class> negative_c=C.get_coefficients();
+							for(int k=0;k<negative_c.size();k++)
+							{
+								negative_c[k]=-negative_c[k];
+							}
+							raw_polynoms.push_back(Polynom(negative_c));
 						}
 					}
 					else
@@ -161,6 +167,12 @@ namespace Kirill
 						if(C.get_degree()>0)
 						{
 							raw_polynoms.push_back(C);
+							std::vector<mpz_class> negative_c=C.get_coefficients();
+							for(int k=0;k<negative_c.size();k++)
+							{
+								negative_c[k]=-negative_c[k];
+							}
+							raw_polynoms.push_back(Polynom(negative_c));
 						}
 					}
 				}			

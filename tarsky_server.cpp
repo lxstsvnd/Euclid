@@ -122,7 +122,7 @@ namespace Kirill
 			//отправка вектора многочленов по клиентам
 			//отправляются коэффициенты, многочлен
 			//собирается на месте
-			for(int polyIter = 0; polyIter < unsaturated.size(); ++polyIter)
+			for(int polyIter = left_up_x; polyIter < unsaturated.size(); ++polyIter)
 			{
 				std::vector<mpz_class> coefs = unsaturated[polyIter].get_coefficients();
 				for(int coefIter = 0; coefIter < coefs.size(); ++coefIter)
@@ -232,26 +232,10 @@ namespace Kirill
 				Polynom_graph[i][i]=1;
 	
 			//Добавляем многочлены-остатки
-			if(Polynom_graph.size() == diff)
+			raw_polynoms=part_polynom_matrix_calculation(Polynom_graph, unsaturated, Polynom_graph.size()-diff, 0, Polynom_graph.size(), Polynom_graph.size(), fd, sockListener);
+			for(int i = 0; i < raw_polynoms.size(); i++)
 			{
-				raw_polynoms=part_polynom_matrix_calculation(Polynom_graph,unsaturated, 0,0,Polynom_graph.size(),Polynom_graph.size(), fd, sockListener);
-				for(int i = 0; i < raw_polynoms.size(); i++)
-				{
-					unsaturated.push_back(raw_polynoms[i]);
-				}
-			}
-			else
-			{
-				raw_polynoms=part_polynom_matrix_calculation(Polynom_graph, unsaturated, Polynom_graph.size()-diff, 0, Polynom_graph.size(), Polynom_graph.size()-diff, fd, sockListener);
-				for(int i = 0; i < raw_polynoms.size(); i++)
-				{
-					unsaturated.push_back(raw_polynoms[i]);
-				}
-				raw_polynoms=part_polynom_matrix_calculation(Polynom_graph, unsaturated, 0, Polynom_graph.size()-diff, Polynom_graph.size(), Polynom_graph.size(), fd, sockListener);
-				for(int i = 0; i < raw_polynoms.size(); i++)
-				{
-					unsaturated.push_back(raw_polynoms[i]);
-				}
+				unsaturated.push_back(raw_polynoms[i]);
 			}
 			
 			std::cout << "unique" << std::endl;
