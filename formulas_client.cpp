@@ -130,43 +130,6 @@ namespace Kirill
 		return false;
 	}
 
-	bool DNF::decide()
-	{
-		std::vector<Polynom> DNF_polynoms;	//Здесь лежат все многочлены из ДНФ
-		std::vector<std::vector<int>> table;	//Сюда будет записана таблица Тарского
-
-		for(Conjunct curConjunct : _conjuncts)
-			for(Predicate* curPredicate : curConjunct.getPredicates())
-				DNF_polynoms.push_back(curPredicate->get_polynom());
-		uniquying(DNF_polynoms);		//Оставим только уникальные многочлены
-		degree_sort(DNF_polynoms);		//Отсортируем многочлены в соотв. с таблицей
-		table=get_format_table(DNF_polynoms);	
-		int table_wideness=table[0].size();	//Ширина таблицы
-
-		//debug line
-		std::cout<<"Printing extracted table:"<<std::endl;
-		for(auto polynom_string : table)
-		{
-			for(auto integer : polynom_string)
-				std::cout<<integer<<" ";
-			std::cout<<std::endl;
-		}	
-		std::cout<<"Table printed"<<std::endl;
-		//debug line
-
-		//Итерация по всем точкам и промежуткам
-		for(int i = 0; i < table_wideness; i++)
-		{
-			//Получаем срез знаков для данной точки
-			std::vector<int> column(table.size());
-			for(int j = 0; j < table.size(); j++)
-				column[j]=table[j][i];
-			//Вычислим значение ДНФ для этого вектора
-			if(this->calculate(column,DNF_polynoms)==true)
-				return true;
-		}
-		return false;
-	}
 	//Добавляет коъюнкт в предикат
 	void DNF::add_conjunct(Conjunct conjunct)
 	{

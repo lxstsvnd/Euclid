@@ -485,7 +485,7 @@ namespace Dima
 					
 						for(std::pair<mpz_class, int> curPair : _resultCoefsTMP)
 						{
-//							std::cout << std::get<0>(curPair) << " " << std::get<1>(curPair) << std::endl;
+//							std::cout << std::get<0>(curPair) << std::endl;
 						}
 //						std::cout << "After merging" << std::endl;
 						for(mpz_class cur : _resultCoefs)

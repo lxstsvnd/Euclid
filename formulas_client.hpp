@@ -63,7 +63,6 @@ namespace Kirill
 		DNF(std::vector<Conjunct> conjuncts);
 		DNF();
 		bool calculate(std::vector<int> &column, std::vector<Polynom> &DNF_polynoms);
-		bool decide();
 		void add_conjunct(Conjunct);
 		void printPolynoms(); //для Димасика
 	};

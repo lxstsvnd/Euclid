@@ -94,31 +94,31 @@ namespace Kirill
 
 	std::vector<Polynom> part_polynom_matrix_calculation(std::vector<std::vector<int>> &Polynom_graph, std::vector<Polynom> unsaturated, int left_up_x, int left_up_y,int right_down_x, int right_down_y, std::vector<int> fd, int sockListener)
 	{
-		char buffer3[1024];
+		//для записи полученных от клиентов значений нужны буферы
+		char buffer[1024];
+
+		//обход по всем клиентам
         	for(int fdIter = 0; fdIter < fd.size(); ++fdIter)
         	{
-			char buffer1[1024];
-			char buffer2[1024];
-			char buffer[1024];
                 	//рассылка таблицы по всем клиентам
                         //таблица отправляется по столбцам
  	                for(int columnIter = left_up_x; columnIter < right_down_x; ++columnIter)
                         {
                         	for(int rowIter = left_up_y; rowIter < right_down_y; ++rowIter)
                                 {
-					memset(buffer, 0, 1024);
+//					memset(buffer, 0, 1024);
                 	                std::string tmp = std::to_string(Polynom_graph[columnIter][rowIter]);
                                         send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
 					recv(fd[fdIter], buffer, 1024, 0);
                                 }
-				memset(buffer, 0, 1024);
+//				memset(buffer, 0, 1024);
 				send(fd[fdIter], "finish\0", 7, 0);
 				recv(fd[fdIter], buffer, 1024, 0);
                         }
+//			memset(buffer, 0, 1024);
 			send(fd[fdIter], "end\0", 4, 0);
-			recv(fd[fdIter], buffer1, 1024, 0);
+			recv(fd[fdIter], buffer, 1024, 0);
 
-//			std::cout << "table sent" << std::endl;
 			//отправка вектора многочленов по клиентам
 			//отправляются коэффициенты, многочлен
 			//собирается на месте
@@ -127,37 +127,34 @@ namespace Kirill
 				std::vector<mpz_class> coefs = unsaturated[polyIter].get_coefficients();
 				for(int coefIter = 0; coefIter < coefs.size(); ++coefIter)
 				{
-					memset(buffer, 0, 1024);
+//					memset(buffer, 0, 1024);
 					std::string tmp = coefs[coefIter].get_str();
 					send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
 					recv(fd[fdIter], buffer, 1024, 0);
 				}
-				memset(buffer, 0, 1024);
+//				memset(buffer, 0, 1024);
 				send(fd[fdIter], "finish\0", 7, 0);
 				recv(fd[fdIter], buffer, 1024, 0);
 			}
 			send(fd[fdIter], "end\0", 4, 0);
 
-//			std::cout << "polynom sent" << std::endl;
                 }
 
-		//ждет, пока все клиенты посчитают
+		//сервер должен получить от всех серверов сообщение 
+		//о готовности отправлять результаты вычислений
 		for(int fdIter = 0; fdIter < fd.size(); ++fdIter)
 		{
-			recv(fd[fdIter], buffer3, 1024, 0);
+			recv(fd[fdIter], buffer, 1024, 0);
 		}
 
 		//многочлены собираются обратно и записываются в raw_polynoms
 		std::vector<Polynom> raw_polynoms;
 		std::vector<mpz_class> coefs;
 		std::cout << "start writing polynoms" << std::endl;
-		char buffer[1024];
-		char buffer2[1024];
-		char message[] = "ready";
 		for(int fdIter = 0; fdIter < fd.size(); ++fdIter)
 		{
 			std::cout << "some descriptor" << std::endl;
-			send(fd[fdIter], message, sizeof(message), 0); //говорит клиенту, что готов слушать
+			send(fd[fdIter], "ready\0", 6, 0); //говорит клиенту, что готов слушать
 			while(true)
 			{
 				memset(buffer, 0, 1024);
@@ -197,10 +194,10 @@ namespace Kirill
 					coefs.push_back(mpz_class(buffer));
 					std::cout << "written" << std::endl;
 				}
-				send(fd[fdIter], message, sizeof(message), 0);
+				send(fd[fdIter], "ready\0", 6, 0);
 			}
 			std::cout << "almost got" << std::endl;
-			send(fd[fdIter], message, sizeof(message), 0);
+			send(fd[fdIter], "ready\0", 6, 0);
 		}
 		
 		std::cout << "polynoms got" << std::endl;
@@ -256,6 +253,7 @@ namespace Kirill
 					unsaturated.push_back(raw_polynoms[i]);
 				}
 			}
+			
 			std::cout << "unique" << std::endl;
 			uniquying(unsaturated);//оставляем только уникальные
 	
