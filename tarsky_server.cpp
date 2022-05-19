@@ -3,6 +3,7 @@
 #include<set>
 #include<algorithm>
 #include<math.h>
+#include <cstring>
 #include"tarsky_server.hpp"
 
 //В этом файле описаны функции для работы с алгоритмом Тарского
@@ -93,62 +94,76 @@ namespace Kirill
 
 	std::vector<Polynom> part_polynom_matrix_calculation(std::vector<std::vector<int>> &Polynom_graph, std::vector<Polynom> unsaturated, int left_up_x, int left_up_y,int right_down_x, int right_down_y, std::vector<int> fd, int sockListener)
 	{
+		char buffer3[1024];
         	for(int fdIter = 0; fdIter < fd.size(); ++fdIter)
         	{
 			char buffer1[1024];
 			char buffer2[1024];
+			char buffer[1024];
                 	//рассылка таблицы по всем клиентам
                         //таблица отправляется по столбцам
  	                for(int columnIter = left_up_x; columnIter < right_down_x; ++columnIter)
                         {
-				char buffer[1024];
                         	for(int rowIter = left_up_y; rowIter < right_down_y; ++rowIter)
                                 {
+					memset(buffer, 0, 1024);
                 	                std::string tmp = std::to_string(Polynom_graph[columnIter][rowIter]);
                                         send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
 					recv(fd[fdIter], buffer, 1024, 0);
                                 }
+				memset(buffer, 0, 1024);
 				send(fd[fdIter], "finish\0", 7, 0);
 				recv(fd[fdIter], buffer, 1024, 0);
                         }
 			send(fd[fdIter], "end\0", 4, 0);
 			recv(fd[fdIter], buffer1, 1024, 0);
 
-			std::cout << "table sent" << std::endl;
+//			std::cout << "table sent" << std::endl;
 			//отправка вектора многочленов по клиентам
 			//отправляются коэффициенты, многочлен
 			//собирается на месте
 			for(int polyIter = 0; polyIter < unsaturated.size(); ++polyIter)
 			{
-				char buffer[1024];
 				std::vector<mpz_class> coefs = unsaturated[polyIter].get_coefficients();
 				for(int coefIter = 0; coefIter < coefs.size(); ++coefIter)
 				{
+					memset(buffer, 0, 1024);
 					std::string tmp = coefs[coefIter].get_str();
 					send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
 					recv(fd[fdIter], buffer, 1024, 0);
 				}
+				memset(buffer, 0, 1024);
 				send(fd[fdIter], "finish\0", 7, 0);
 				recv(fd[fdIter], buffer, 1024, 0);
 			}
 			send(fd[fdIter], "end\0", 4, 0);
-			recv(fd[fdIter], buffer2, 1024, 0);
 
-			std::cout << "polynom sent" << std::endl;
+//			std::cout << "polynom sent" << std::endl;
                 }
+
+		//ждет, пока все клиенты посчитают
+		for(int fdIter = 0; fdIter < fd.size(); ++fdIter)
+		{
+			recv(fd[fdIter], buffer3, 1024, 0);
+		}
 
 		//многочлены собираются обратно и записываются в raw_polynoms
 		std::vector<Polynom> raw_polynoms;
 		std::vector<mpz_class> coefs;
 		std::cout << "start writing polynoms" << std::endl;
+		char buffer[1024];
+		char buffer2[1024];
+		char message[] = "ready";
 		for(int fdIter = 0; fdIter < fd.size(); ++fdIter)
 		{
-			char message[] = "ready";
+			std::cout << "some descriptor" << std::endl;
+			send(fd[fdIter], message, sizeof(message), 0); //говорит клиенту, что готов слушать
 			while(true)
 			{
-				char buffer[1024];
-				std::cout << "waiting" << std::endl;
+				memset(buffer, 0, 1024);
+				std::cout << "set memory" << std::endl;
 				int bytesRead = recv(fd[fdIter], buffer, 1024, 0);
+				std::cout << buffer << std::endl;
 				if(bytesRead <= 0)
 				{
 					break;
@@ -156,6 +171,7 @@ namespace Kirill
 
 				if(!strcmp(buffer, "finish"))
 				{
+					std::cout << "finishing polynom" << std::endl;
 					if(!coefs.empty())
 					{
 						Polynom tmpPoly(coefs);
@@ -163,8 +179,9 @@ namespace Kirill
 						coefs.clear();
 					}
 				}
-				if(!strcmp(buffer, "end"))
+				else if(!strcmp(buffer, "end"))
 				{
+					std::cout << "got end marker" << std::endl;
 					if(!coefs.empty())
 					{
 						Polynom tmpPoly(coefs);
@@ -175,12 +192,14 @@ namespace Kirill
 				}
 				else
 				{
+					std::cout << "writing polynom" << std::endl;
 					std::cout << buffer << std::endl;
 					coefs.push_back(mpz_class(buffer));
 					std::cout << "written" << std::endl;
 				}
 				send(fd[fdIter], message, sizeof(message), 0);
 			}
+			std::cout << "almost got" << std::endl;
 			send(fd[fdIter], message, sizeof(message), 0);
 		}
 		

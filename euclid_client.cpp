@@ -8,7 +8,7 @@
 #include <netinet/in.h>
 #include <iostream>
 
-#define LOCAL_PORT 9887
+#define LOCAL_PORT 5528
 #define LOCAL_ADDR INADDR_ANY
 
 int main()
@@ -36,15 +36,9 @@ int main()
         }
 
         //работа с сервером
-	while(true)
-	{
-        	bytesRead = recv(sock, buffer, 1024, 0);
-		if(bytesRead <= 0)
-		{
-			break;
-		}
-        	for(int iter = 0; iter < bytesRead; ++iter) printf("%c", buffer[iter]);
-	}
-        close(sock);
+	Kirill::calculate(sock);	
+
+	//завершение работы
+	close(sock);
 }
 

@@ -12,14 +12,15 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 
-#define LOCAL_PORT 9887
+#define LOCAL_PORT 5528
 #define LOCAL_ADDR INADDR_ANY
-#define CONNECT_TIMEOUT 5
+#define CONNECT_TIMEOUT 10
+#define CLIENTS_NUM 1
 
 int main()
 {
         //подготовка к работе сервера
-        int sockListener;
+	int sockListener;
         char message[] = "Hello, World!\n";
         char buffer[sizeof(message)];
         struct sockaddr_in addr;
@@ -28,7 +29,7 @@ int main()
         {
                 throw std::runtime_error("Error while building listener");
         }
-        fcntl(sockListener, F_SETFL, O_NONBLOCK);
+//        fcntl(sockListener, F_SETFL, O_NONBLOCK);
 
         //заполнение полей адреса и привязка неблокирующего слушающего сокета
         addr.sin_family = AF_INET;
@@ -44,15 +45,15 @@ int main()
         //сокет пытается принять клиентов
         std::vector<int> fd;
         listen(sockListener, 1);
-        for(int timeCounter = 0; timeCounter < CONNECT_TIMEOUT + 1; ++timeCounter)
+        for(int clientCounter = 0; clientCounter < CLIENTS_NUM; ++clientCounter)
         {
-                std::cout << timeCounter << std::endl;
                 int sockReceive = accept(sockListener, NULL, NULL);
-                if(sockReceive >= 0)
+                if(sockReceive < 0)
                 {
-                        fd.push_back(sockReceive);
+                        throw std::runtime_error("Error while receiving");
                 }
-                sleep(1);
+		std::cout << "client " << clientCounter + 1 << " joined!" << std::endl;
+		fd.push_back(sockReceive);
         }
 
         std::cout << "Server is ready to work" << std::endl;

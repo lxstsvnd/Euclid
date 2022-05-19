@@ -16,6 +16,9 @@ namespace Kirill
 	{
 		while(true)
 		{
+			char buffer[1024];
+			char buffer3[1024];
+			memset(buffer, 0, 1024);
 			std::cout << "a" << std::endl;
 			//получение таблицы от сервера
 			std::vector<std::vector<int>> table;
@@ -23,7 +26,7 @@ namespace Kirill
 			char message[] = "ready";
 			while(true)
 			{
-				char buffer[1024];
+				memset(buffer, 0, 1024);
 				std::cout << "b" << std::endl;
 				int bytesRead = recv(sock, buffer, 1024, 0);
 				std::cout << buffer << std::endl;
@@ -41,7 +44,7 @@ namespace Kirill
 						column.clear();
 					}
 				}
-				if(!strcmp(buffer, "end"))
+				else if(!strcmp(buffer, "end"))
 				{
 					if(!column.empty())
 					{
@@ -65,7 +68,6 @@ namespace Kirill
 			while(true)
 			{
 				char message[] = "ready";
-				char buffer[1024];
 				memset(buffer, 0, 1024);
 				int bytesRead = recv(sock, buffer, 1024, 0);
 				std::cout << buffer << std::endl;
@@ -84,7 +86,7 @@ namespace Kirill
 						coefs.clear();
 					}
 				}
-				if(!strcmp(buffer, "end"))
+				else if(!strcmp(buffer, "end"))
 				{
 					if(!coefs.empty())
 					{
@@ -101,19 +103,22 @@ namespace Kirill
 				send(sock, message, sizeof(message), 0);
 			}
 			std::cout << "got polynoms" << std::endl;
-			send(sock, message, sizeof(message), 0);
 
 			//запуск насыщения системы
 			std::vector<Polynom> saturated = part_polynom_matrix_calculation(table, unsaturated, sock);
-			std::cout << "saturated" << std::endl;
+			std::cout << "saturated:" << saturated.size() << std::endl;
 
 			//вектор многочленов возвращается на сервер
+			char message2[] = "ready";
+			send(sock, message2, sizeof(message2), 0); //говорит серверу, что все посчитано
+			recv(sock, buffer3, 1024, 0); //ждет, пока сервер начнет его слушать
 			for(int polyIter = 0; polyIter < saturated.size(); ++polyIter)
 			{
-				char buffer[1024];
+				memset(buffer, 0, 1024);
 				std::vector<mpz_class> coefs = saturated[polyIter].get_coefficients();
 				for(int coefIter = 0; coefIter < coefs.size(); ++coefIter)
 				{
+					memset(buffer, 0, 1024);
 					std::string tmp = coefs[coefIter].get_str();
 					send(sock, tmp.c_str(), tmp.size(), 0);
 					recv(sock, buffer, 1024, 0);
@@ -121,6 +126,8 @@ namespace Kirill
 				send(sock, "finish\0", 7, 0);
 				recv(sock, buffer, 1024, 0);
 			}
+			send(sock, "end\0", 4, 0);
+			recv(sock, buffer3, 1024, 0);
 			std::cout << "sent" << std::endl;
 		}
 	}
