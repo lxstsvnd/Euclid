@@ -10,7 +10,7 @@
 
 namespace Kirill
 {
-	std::vector<Polynom> part_polynom_matrix_calculation(std::vector<std::vector<int>> &Polynom_graph, std::vector<Polynom> unsaturated, int sock);
+	std::vector<Polynom> part_polynom_matrix_calculation(std::vector<Polynom> unsaturated, int left_up_x, int left_up_y, int right_down_x, int right_down_y, int sock);
 
 	void calculate(int sock)
 	{
@@ -23,42 +23,52 @@ namespace Kirill
 		while(true)
 		{
 			//получение таблицы от сервера
-			std::vector<std::vector<int>> table;
-			std::vector<int> column;
-			while(true)
+//			std::vector<std::vector<int>> table;
+//			std::vector<int> column;
+//			while(true)
+//			{
+//				memset(buffer, 0, 1024);
+//				int bytesRead = recv(sock, buffer, 1024, 0);
+//				if(bytesRead <= 0)
+//				{
+//					break;
+//				}
+//
+//				if(!strcmp(buffer, "finish"))
+//				{
+//					if(!column.empty())
+//					{
+//						table.push_back(column);
+//						column.clear();
+//					}
+//				}
+//				else if(!strcmp(buffer, "end"))
+//				{
+//					if(!column.empty())
+//					{
+//						table.push_back(column);
+//						column.clear();
+//					}
+//					break;
+//				}
+//				else
+//				{
+//					column.push_back(std::atoi(buffer));
+//				}
+//				send(sock, "ready\0", 6, 0);
+//			}
+//			std::cout << "got table" << std::endl;
+//			send(sock, "ready\0", 6, 0);
+
+			//получение пределов таблицы от сервера
+			int table[4];
+			for(int tableIter = 0; tableIter < 4; ++tableIter)
 			{
 				memset(buffer, 0, 1024);
-				int bytesRead = recv(sock, buffer, 1024, 0);
-				if(bytesRead <= 0)
-				{
-					break;
-				}
-
-				if(!strcmp(buffer, "finish"))
-				{
-					if(!column.empty())
-					{
-						table.push_back(column);
-						column.clear();
-					}
-				}
-				else if(!strcmp(buffer, "end"))
-				{
-					if(!column.empty())
-					{
-						table.push_back(column);
-						column.clear();
-					}
-					break;
-				}
-				else
-				{
-					column.push_back(std::atoi(buffer));
-				}
+				recv(sock, buffer, 1024, 0);
+				table[tableIter] = std::atoi(buffer);
 				send(sock, "ready\0", 6, 0);
 			}
-//			std::cout << "got table" << std::endl;
-			send(sock, "ready\0", 6, 0);
 
 			//получение вектора многочленов от сервера
 			std::vector<mpz_class> coefs;
@@ -99,7 +109,7 @@ namespace Kirill
 //			std::cout << "got polynoms" << std::endl;
 
 			//запуск насыщения системы
-			std::vector<Polynom> saturated = part_polynom_matrix_calculation(table, unsaturated, sock);
+			std::vector<Polynom> saturated = part_polynom_matrix_calculation(unsaturated, table[0], table[1], table[2], table[3], sock);
 
 			//вектор многочленов возвращается на сервер
 			send(sock, "ready\0", 6, 0); //говорит серверу, что все посчитано
@@ -124,15 +134,26 @@ namespace Kirill
 
 	//Принимает матрицу остатков, вектор многочленов и координаты левого верхного и правого нижнего опорного элемента матрицы
 	//Возвращает вектор остатков от деления многочленов в заданном промежутке
-	std::vector<Polynom> part_polynom_matrix_calculation(std::vector<std::vector<int>> &Polynom_graph, std::vector<Polynom> unsaturated, int sock)
+	std::vector<Polynom> part_polynom_matrix_calculation(std::vector<Polynom> unsaturated, int left_up_x, int left_up_y, int right_down_x, int right_down_y, int sock)
 	{
 		std::vector<Polynom> raw_polynoms;
 		Polynom C;
+
+		std::vector<std::vector<int>> Polynom_graph;
+		std::vector<int> column;
+		for(int i = 0; i < right_down_y - left_up_y; ++i)
+		{
+			column.push_back(0);
+		}
+		for(int i = 0; i < right_down_x - left_up_x; ++i)
+		{
+			Polynom_graph.push_back(column);
+		}
 	
 		//непосредственное насыщение
-		for(int i=0;i<Polynom_graph.size();i++)
+		for(int i=0;i<right_down_x-left_up_x;i++)
 		{
-			for(int j =0;j<Polynom_graph[i].size();j++)
+			for(int j =0;j<right_down_y-left_up_y;j++)
 			{
 				if(Polynom_graph[i][j]==0)//если мы еще не пытались делить i многочлен на j
 				{	

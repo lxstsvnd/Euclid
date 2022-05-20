@@ -102,37 +102,72 @@ namespace Kirill
 		//обход по всем клиентам
         	for(int fdIter = 0; fdIter < fd.size(); ++fdIter)
         	{
-                	//рассылка таблицы по всем клиентам
-                        //таблица отправляется по столбцам
-
- 	                for(int columnIter = left_up_x; columnIter < right_down_x; ++columnIter)
-                        {
-				if(fdIter == fd.size() - 1)
-				{
-					for(int rowIter = left_up_y + fdIter*div; rowIter < right_down_y; ++rowIter)
-					{
-						std::string tmp = std::to_string(Polynom_graph[columnIter][rowIter]);
-						send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
-						recv(fd[fdIter], buffer, 1024, 0);
-					}
-				}
-				else
-				{
-                        		for(int rowIter = left_up_y + fdIter*div; rowIter < (fdIter+1)*div; ++rowIter)
-                                	{
+//                	//рассылка таблицы по всем клиентам
+//                        //таблица отправляется по столбцам
+//
+// 	                for(int columnIter = left_up_x; columnIter < right_down_x; ++columnIter)
+//                        {
+//				if(fdIter == fd.size() - 1)
+//				{
+//					for(int rowIter = left_up_y + fdIter*div; rowIter < right_down_y; ++rowIter)
+//					{
+//						std::string tmp = std::to_string(Polynom_graph[columnIter][rowIter]);
+//						send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
+//						recv(fd[fdIter], buffer, 1024, 0);
+//					}
+//				}
+//				else
+//				{
+//                        		for(int rowIter = left_up_y + fdIter*div; rowIter < (fdIter+1)*div; ++rowIter)
+//                                	{
 //						memset(buffer, 0, 1024);
-                	                	std::string tmp = std::to_string(Polynom_graph[columnIter][rowIter]);
-                                        	send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
-						recv(fd[fdIter], buffer, 1024, 0);
-                                	}
-				}
+//                	                	std::string tmp = std::to_string(Polynom_graph[columnIter][rowIter]);
+//                                        	send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
+//						recv(fd[fdIter], buffer, 1024, 0);
+//                                	}
+//				}
 //				memset(buffer, 0, 1024);
-				send(fd[fdIter], "finish\0", 7, 0);
-				recv(fd[fdIter], buffer, 1024, 0);
-                        }
+//				send(fd[fdIter], "finish\0", 7, 0);
+//				recv(fd[fdIter], buffer, 1024, 0);
+//                        }
 //			memset(buffer, 0, 1024);
-			send(fd[fdIter], "end\0", 4, 0);
-			recv(fd[fdIter], buffer, 1024, 0);
+//			send(fd[fdIter], "end\0", 4, 0);
+//			recv(fd[fdIter], buffer, 1024, 0);
+
+
+		//отправка пределов таблицы по клиентам
+			std::string tmp;
+			if(fdIter == fd.size() - 1)
+			{
+				tmp = std::to_string(left_up_x);
+				send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
+				recv(fd[fdIter], buffer, 1024, 0);
+				tmp = std::to_string(left_up_y + fdIter*div);
+				send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
+				recv(fd[fdIter], buffer, 1024, 0);
+
+				tmp = std::to_string(right_down_x);
+				send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
+				recv(fd[fdIter], buffer, 1024, 0);
+
+				tmp = std::to_string(right_down_y);
+				send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
+				recv(fd[fdIter], buffer, 1024, 0);
+			}
+			else
+			{
+				tmp = std::to_string(left_up_x);
+				send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
+				recv(fd[fdIter], buffer, 1024, 0);
+
+				tmp = std::to_string(left_up_y + fdIter*div);
+				send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
+				recv(fd[fdIter], buffer, 1024, 0);
+
+				tmp = std::to_string(right_down_x);
+				send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
+				recv(fd[fdIter], buffer, 1024, 0);
+			}
 
 			//отправка вектора многочленов по клиентам
 			//отправляются коэффициенты, многочлен
