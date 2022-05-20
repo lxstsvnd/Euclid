@@ -38,6 +38,7 @@ namespace Dima
 		MULT,
 		MULT_TMP, //вспомогательный нетерминал для умножения
 		CONST,
+		DEGREE,
 
 		END,
 		EPSILON
@@ -72,6 +73,7 @@ namespace Dima
 		"MULT",
 		"MULT_TMP",
 		"CONST",
+		"DEGREE",
 
 		"END",
 		"EPSILON"
