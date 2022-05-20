@@ -92,81 +92,54 @@ namespace Kirill
 	//Принимает матрицу остатков, вектор многочленов и координаты левого верхного и правого нижнего опорного элемента матрицы
 	//Возвращает вектор остатков от деления многочленов в заданном промежутке
 
-	std::vector<Polynom> part_polynom_matrix_calculation(std::vector<std::vector<int>> &Polynom_graph, std::vector<Polynom> unsaturated, int left_up_x, int left_up_y,int right_down_x, int right_down_y, std::vector<int> fd, int sockListener)
+	std::vector<Polynom> part_polynom_matrix_calculation(std::vector<Polynom> unsaturated, int left_up_x, int left_up_y,int right_down_x, int right_down_y, std::vector<int> fd, int sockListener)
 	{
 		//для записи полученных от клиентов значений нужны буферы
-		char buffer[1024];
+		char buffer[100];
 		int div = (right_down_y - left_up_y) / fd.size();
 		int mod = (right_down_y - left_up_y) / fd.size();
 
 		//обход по всем клиентам
         	for(int fdIter = 0; fdIter < fd.size(); ++fdIter)
         	{
-//                	//рассылка таблицы по всем клиентам
-//                        //таблица отправляется по столбцам
-//
-// 	                for(int columnIter = left_up_x; columnIter < right_down_x; ++columnIter)
-//                        {
-//				if(fdIter == fd.size() - 1)
-//				{
-//					for(int rowIter = left_up_y + fdIter*div; rowIter < right_down_y; ++rowIter)
-//					{
-//						std::string tmp = std::to_string(Polynom_graph[columnIter][rowIter]);
-//						send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
-//						recv(fd[fdIter], buffer, 1024, 0);
-//					}
-//				}
-//				else
-//				{
-//                        		for(int rowIter = left_up_y + fdIter*div; rowIter < (fdIter+1)*div; ++rowIter)
-//                                	{
-//						memset(buffer, 0, 1024);
-//                	                	std::string tmp = std::to_string(Polynom_graph[columnIter][rowIter]);
-//                                        	send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
-//						recv(fd[fdIter], buffer, 1024, 0);
-//                                	}
-//				}
-//				memset(buffer, 0, 1024);
-//				send(fd[fdIter], "finish\0", 7, 0);
-//				recv(fd[fdIter], buffer, 1024, 0);
-//                        }
-//			memset(buffer, 0, 1024);
-//			send(fd[fdIter], "end\0", 4, 0);
-//			recv(fd[fdIter], buffer, 1024, 0);
-
-
-		//отправка пределов таблицы по клиентам
+			std::cout << "sending data to client" << fdIter+1 << std::endl;
+			//отправка пределов таблицы по клиентам
 			std::string tmp;
 			if(fdIter == fd.size() - 1)
 			{
 				tmp = std::to_string(left_up_x);
 				send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
-				recv(fd[fdIter], buffer, 1024, 0);
+				recv(fd[fdIter], buffer, 100, 0);
+
 				tmp = std::to_string(left_up_y + fdIter*div);
 				send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
-				recv(fd[fdIter], buffer, 1024, 0);
+				recv(fd[fdIter], buffer, 100, 0);
 
 				tmp = std::to_string(right_down_x);
 				send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
-				recv(fd[fdIter], buffer, 1024, 0);
+				recv(fd[fdIter], buffer, 100, 0);
 
 				tmp = std::to_string(right_down_y);
 				send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
-				recv(fd[fdIter], buffer, 1024, 0);
+				recv(fd[fdIter], buffer, 100, 0);
 			}
 			else
 			{
 				tmp = std::to_string(left_up_x);
 				send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
-				recv(fd[fdIter], buffer, 1024, 0);
+				recv(fd[fdIter], buffer, 100, 0);
 
 				tmp = std::to_string(left_up_y + fdIter*div);
 				send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
-				recv(fd[fdIter], buffer, 1024, 0);
+				recv(fd[fdIter], buffer, 100, 0);
 
 				tmp = std::to_string(right_down_x);
 				send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
-				recv(fd[fdIter], buffer, 1024, 0);
+				recv(fd[fdIter], buffer, 100, 0);
+
+				tmp = std::to_string(left_up_y + (fdIter+1)*div);
+				send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
+				recv(fd[fdIter], buffer, 100, 0);
 			}
 
 			//отправка вектора многочленов по клиентам
@@ -191,25 +164,23 @@ namespace Kirill
 
 		//сервер должен получить от всех серверов сообщение 
 		//о готовности отправлять результаты вычислений
+		std::cout << "waiting for clients" << std::endl;
 		for(int fdIter = 0; fdIter < fd.size(); ++fdIter)
 		{
-			recv(fd[fdIter], buffer, 1024, 0);
+			recv(fd[fdIter], buffer, 100, 0);
 		}
 
 		//многочлены собираются обратно и записываются в raw_polynoms
 		std::vector<Polynom> raw_polynoms;
 		std::vector<mpz_class> coefs;
-		std::cout << "start writing polynoms" << std::endl;
 		for(int fdIter = 0; fdIter < fd.size(); ++fdIter)
 		{
-			std::cout << "some descriptor" << std::endl;
+			std::cout << "getting data from client " << fdIter+1 << std::endl;
 			send(fd[fdIter], "ready\0", 6, 0); //говорит клиенту, что готов слушать
 			while(true)
 			{
-				memset(buffer, 0, 1024);
-				std::cout << "set memory" << std::endl;
+				memset(buffer, 0, 100);
 				int bytesRead = recv(fd[fdIter], buffer, 1024, 0);
-				std::cout << buffer << std::endl;
 				if(bytesRead <= 0)
 				{
 					break;
@@ -217,7 +188,6 @@ namespace Kirill
 
 				if(!strcmp(buffer, "finish"))
 				{
-					std::cout << "finishing polynom" << std::endl;
 					if(!coefs.empty())
 					{
 						Polynom tmpPoly(coefs);
@@ -227,7 +197,6 @@ namespace Kirill
 				}
 				else if(!strcmp(buffer, "end"))
 				{
-					std::cout << "got end marker" << std::endl;
 					if(!coefs.empty())
 					{
 						Polynom tmpPoly(coefs);
@@ -238,19 +207,13 @@ namespace Kirill
 				}
 				else
 				{
-					std::cout << "writing polynom" << std::endl;
-					std::cout << buffer << std::endl;
 					coefs.push_back(mpz_class(buffer));
-					std::cout << "written" << std::endl;
 				}
 				send(fd[fdIter], "ready\0", 6, 0);
 			}
-			std::cout << "almost got" << std::endl;
 			send(fd[fdIter], "ready\0", 6, 0);
 		}
 		
-		std::cout << "polynoms got" << std::endl;
-
 		return raw_polynoms;
 	}
 
@@ -260,34 +223,20 @@ namespace Kirill
 		Polynom C=unsaturated[0];
 		std::vector<Polynom> raw_polynoms;
 		int size=unsaturated.size();
-	
-		std::vector<std::vector<int>> Polynom_graph;//Матрица делимостия
-		//в i-м столбце и j-м строке находится маркер, если было произведено
-		//деление i-го многочлена в массиве на j-й многочлен в массиве
-		//с учетом того что степень первого не меньше степени второго
-		
-		std::vector<int> matrix_null_column(size,0);//столбец из нулей
-	
-		for(int i=0;i<size;i++)
-			Polynom_graph.push_back(matrix_null_column);
 
-		int diff = Polynom_graph.size();
+		int diff = unsaturated.size();
 		
 		//Непосредственное замыкание
 		while (1)
 		{
-			//деление многочлена на самого себя не имеет смысла
-			for(int i=0;i<Polynom_graph.size();i++)
-				Polynom_graph[i][i]=1;
-	
 			//Добавляем многочлены-остатки
-			raw_polynoms=part_polynom_matrix_calculation(Polynom_graph, unsaturated, Polynom_graph.size()-diff, 0, Polynom_graph.size(), Polynom_graph.size(), fd, sockListener);
+			raw_polynoms=part_polynom_matrix_calculation(unsaturated, unsaturated.size()-diff, 0, unsaturated.size(), unsaturated.size(), fd, sockListener);
 			for(int i = 0; i < raw_polynoms.size(); i++)
 			{
 				unsaturated.push_back(raw_polynoms[i]);
 			}
 			
-			std::cout << "unique" << std::endl;
+			std::cout << "uniquying" << std::endl;
 			uniquying(unsaturated);//оставляем только уникальные
 	
 			//удаляем константы
@@ -296,18 +245,7 @@ namespace Kirill
 					unsaturated.erase(unsaturated.begin()+i);
 	
 			//Расширяем граф добавляя места для маркеров деления новых многочленов
-			diff=unsaturated.size()-size;//разница в размере графа
-			std::vector<int> null_column(unsaturated.size(),0);//столбец из нулей
-	
-			//добавляем нули к уже существующим столбцам
-			for(int i=0;i<size;i++)
-				for(int j=0;j<diff;j++)
-					Polynom_graph[i].push_back(0);
-	
-			//добавляем нулевые столбцы
-			for(int i =0; i<diff;i++)
-				Polynom_graph.push_back(null_column);
-	
+			diff=unsaturated.size()-size;//разница в размере графа		
 	
 			if(size==unsaturated.size())//если после итерации новых многочленов не прибавилось, то выходим из цикла
 				break;
