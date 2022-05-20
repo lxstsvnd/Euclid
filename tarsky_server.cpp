@@ -6,6 +6,8 @@
 #include <cstring>
 #include"tarsky_server.hpp"
 #include <time.h>
+#include <thread>
+#include <mutex>
 
 //В этом файле описаны функции для работы с алгоритмом Тарского
 
@@ -93,6 +95,71 @@ namespace Kirill
 	//Принимает матрицу остатков, вектор многочленов и координаты левого верхного и правого нижнего опорного элемента матрицы
 	//Возвращает вектор остатков от деления многочленов в заданном промежутке
 
+	void sendToServer(std::vector<Polynom>* unsaturated, int fdIter, int left_up_x, int left_up_y,int right_down_x, int right_down_y, std::vector<int> fd, int sockListener)
+	{
+                //для записи полученных от клиентов значений нужны буферы
+                char buffer[100];
+                int div = (right_down_y - left_up_y) / fd.size();
+                int mod = (right_down_y - left_up_y) / fd.size();
+
+                std::cout << "sending data to client " << fdIter+1 << std::endl;
+                //отправка пределов таблицы по клиентам
+                std::string tmp;
+                if(fdIter == fd.size() - 1)
+                {
+                	tmp = std::to_string(left_up_x);
+                        send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
+                        recv(fd[fdIter], buffer, 100, 0);
+
+                        tmp = std::to_string(left_up_y + fdIter*div);
+                        send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
+                        recv(fd[fdIter], buffer, 100, 0);
+
+                        tmp = std::to_string(right_down_x);
+                        send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
+                        recv(fd[fdIter], buffer, 100, 0);
+
+                        tmp = std::to_string(right_down_y);
+                        send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
+                        recv(fd[fdIter], buffer, 100, 0);
+		}
+                else
+                {
+                	tmp = std::to_string(left_up_x);
+                        send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
+                        recv(fd[fdIter], buffer, 100, 0);
+
+                        tmp = std::to_string(left_up_y + fdIter*div);
+                        send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
+                        recv(fd[fdIter], buffer, 100, 0);
+
+                        tmp = std::to_string(right_down_x);
+                        send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
+                        recv(fd[fdIter], buffer, 100, 0);
+
+                        tmp = std::to_string(left_up_y + (fdIter+1)*div);
+                        send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
+                        recv(fd[fdIter], buffer, 100, 0);
+		}
+
+                //отправка вектора многочленов по клиентам
+                //отправляются коэффициенты, многочлен
+                //собирается на месте
+                for(int polyIter = left_up_x; polyIter < unsaturated->size(); ++polyIter)
+                {
+                	std::vector<mpz_class> coefs = unsaturated->at(polyIter).get_coefficients();
+                        for(int coefIter = 0; coefIter < coefs.size(); ++coefIter)
+                        {
+        	                std::string tmp = coefs[coefIter].get_str();
+                                send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
+                                recv(fd[fdIter], buffer, 1024, 0);
+                        }
+                        send(fd[fdIter], "finish\0", 7, 0);
+                        recv(fd[fdIter], buffer, 1024, 0);
+                }
+                send(fd[fdIter], "end\0", 4, 0);
+	}
+
 	void part_polynom_matrix_calculation(std::vector<Polynom>& unsaturated, int left_up_x, int left_up_y,int right_down_x, int right_down_y, std::vector<int> fd, int sockListener)
 	{
 		//для записи полученных от клиентов значений нужны буферы
@@ -101,67 +168,16 @@ namespace Kirill
 		int mod = (right_down_y - left_up_y) / fd.size();
 
 		//обход по всем клиентам
+		std::mutex stcMutex;
+		std::vector<std::thread> threads;
         	for(int fdIter = 0; fdIter < fd.size(); ++fdIter)
         	{
-			std::cout << "sending data to client " << fdIter+1 << std::endl;
-			//отправка пределов таблицы по клиентам
-			std::string tmp;
-			if(fdIter == fd.size() - 1)
-			{
-				tmp = std::to_string(left_up_x);
-				send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
-				recv(fd[fdIter], buffer, 100, 0);
-
-				tmp = std::to_string(left_up_y + fdIter*div);
-				send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
-				recv(fd[fdIter], buffer, 100, 0);
-
-				tmp = std::to_string(right_down_x);
-				send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
-				recv(fd[fdIter], buffer, 100, 0);
-
-				tmp = std::to_string(right_down_y);
-				send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
-				recv(fd[fdIter], buffer, 100, 0);
-			}
-			else
-			{
-				tmp = std::to_string(left_up_x);
-				send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
-				recv(fd[fdIter], buffer, 100, 0);
-
-				tmp = std::to_string(left_up_y + fdIter*div);
-				send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
-				recv(fd[fdIter], buffer, 100, 0);
-
-				tmp = std::to_string(right_down_x);
-				send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
-				recv(fd[fdIter], buffer, 100, 0);
-
-				tmp = std::to_string(left_up_y + (fdIter+1)*div);
-				send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
-				recv(fd[fdIter], buffer, 100, 0);
-			}
-
-			//отправка вектора многочленов по клиентам
-			//отправляются коэффициенты, многочлен
-			//собирается на месте
-			for(int polyIter = left_up_x; polyIter < unsaturated.size(); ++polyIter)
-			{
-				std::vector<mpz_class> coefs = unsaturated[polyIter].get_coefficients();
-				for(int coefIter = 0; coefIter < coefs.size(); ++coefIter)
-				{
-//					memset(buffer, 0, 1024);
-					std::string tmp = coefs[coefIter].get_str();
-					send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
-					recv(fd[fdIter], buffer, 1024, 0);
-				}
-//				memset(buffer, 0, 1024);
-				send(fd[fdIter], "finish\0", 7, 0);
-				recv(fd[fdIter], buffer, 1024, 0);
-			}
-			send(fd[fdIter], "end\0", 4, 0);
-                }
+			threads.emplace_back(sendToServer, &unsaturated, fdIter, left_up_x, left_up_y, right_down_x, right_down_y, fd, sockListener);
+		}
+		for(int fdIter = 0; fdIter < fd.size(); ++fdIter)
+		{
+			threads[fdIter].join();
+		}
 
 		//сервер должен получить от всех серверов сообщение 
 		//о готовности отправлять результаты вычислений
