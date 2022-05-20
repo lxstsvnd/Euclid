@@ -5,6 +5,7 @@
 #include<math.h>
 #include <cstring>
 #include"tarsky_server.hpp"
+#include <time.h>
 
 //В этом файле описаны функции для работы с алгоритмом Тарского
 
@@ -92,7 +93,7 @@ namespace Kirill
 	//Принимает матрицу остатков, вектор многочленов и координаты левого верхного и правого нижнего опорного элемента матрицы
 	//Возвращает вектор остатков от деления многочленов в заданном промежутке
 
-	std::vector<Polynom> part_polynom_matrix_calculation(std::vector<Polynom> unsaturated, int left_up_x, int left_up_y,int right_down_x, int right_down_y, std::vector<int> fd, int sockListener)
+	void part_polynom_matrix_calculation(std::vector<Polynom>& unsaturated, int left_up_x, int left_up_y,int right_down_x, int right_down_y, std::vector<int> fd, int sockListener)
 	{
 		//для записи полученных от клиентов значений нужны буферы
 		char buffer[100];
@@ -102,7 +103,7 @@ namespace Kirill
 		//обход по всем клиентам
         	for(int fdIter = 0; fdIter < fd.size(); ++fdIter)
         	{
-			std::cout << "sending data to client" << fdIter+1 << std::endl;
+			std::cout << "sending data to client " << fdIter+1 << std::endl;
 			//отправка пределов таблицы по клиентам
 			std::string tmp;
 			if(fdIter == fd.size() - 1)
@@ -171,7 +172,6 @@ namespace Kirill
 		}
 
 		//многочлены собираются обратно и записываются в raw_polynoms
-		std::vector<Polynom> raw_polynoms;
 		std::vector<mpz_class> coefs;
 		for(int fdIter = 0; fdIter < fd.size(); ++fdIter)
 		{
@@ -191,7 +191,7 @@ namespace Kirill
 					if(!coefs.empty())
 					{
 						Polynom tmpPoly(coefs);
-						raw_polynoms.push_back(tmpPoly);
+						unsaturated.push_back(tmpPoly);
 						coefs.clear();
 					}
 				}
@@ -200,7 +200,7 @@ namespace Kirill
 					if(!coefs.empty())
 					{
 						Polynom tmpPoly(coefs);
-						raw_polynoms.push_back(tmpPoly);
+						unsaturated.push_back(tmpPoly);
 						coefs.clear();
 					}
 					break;
@@ -213,8 +213,6 @@ namespace Kirill
 			}
 			send(fd[fdIter], "ready\0", 6, 0);
 		}
-		
-		return raw_polynoms;
 	}
 
 	//Функция принимает некоторый вектор многочленов и возращает относительно взятия остатков систему многочленов
@@ -230,11 +228,7 @@ namespace Kirill
 		while (1)
 		{
 			//Добавляем многочлены-остатки
-			raw_polynoms=part_polynom_matrix_calculation(unsaturated, unsaturated.size()-diff, 0, unsaturated.size(), unsaturated.size(), fd, sockListener);
-			for(int i = 0; i < raw_polynoms.size(); i++)
-			{
-				unsaturated.push_back(raw_polynoms[i]);
-			}
+			part_polynom_matrix_calculation(unsaturated, unsaturated.size()-diff, 0, unsaturated.size(), unsaturated.size(), fd, sockListener);
 			
 			std::cout << "uniquying" << std::endl;
 			uniquying(unsaturated);//оставляем только уникальные
@@ -325,7 +319,7 @@ namespace Kirill
 		first_column[2]=sign;
 	
 		t.push_back(first_column);//добавляем строку в таблицу
-		row_print(t,polynoms);//печатаем первую строчку
+//		row_print(t,polynoms);//печатаем первую строчку
 	
 		//Основной цикл для заполнения таблицы
 		for(int p=1;p<polynoms.size();p++)
@@ -335,9 +329,9 @@ namespace Kirill
 			int p_size=new_polynom_coef.size();
 	
 			std::cout<<std::endl<<std::endl<<"NEW ITERATION"<<std::endl;
-			std::cout<<"adding polynom : ";
-			new_polynom.print();
-			std::cout<<std::endl;
+//			std::cout<<"adding polynom : ";
+//			new_polynom.print();
+//			std::cout<<std::endl;
 	
 			std::vector<int> new_roots;//здесь будут хранится индексы корней многочлена
 			std::vector<int> new_roots_temp;
@@ -372,19 +366,19 @@ namespace Kirill
 	
 	
 			//check if iteration was correct
-			new_roots=new_roots_temp;
-			std::cout<<"new roots are";
-			if(new_roots.size()==0)
-				std::cout<<"there is no new roots"<<std::endl;
-			for(int i=0;i<new_roots.size();i++)
-				std::cout<<new_roots[i]<<" ";
-			std::cout<<std::endl;
-			std::cout<<"table is now"<<std::endl;
+//			new_roots=new_roots_temp;
+//			std::cout<<"new roots are";
+//			if(new_roots.size()==0)
+//				std::cout<<"there is no new roots"<<std::endl;
+//			for(int i=0;i<new_roots.size();i++)
+//				std::cout<<new_roots[i]<<" ";
+//			std::cout<<std::endl;
+//			std::cout<<"table is now"<<std::endl;
 	
 			//3.Теперь изменение столбца последнего многочлена
 			add_new_roots_last_row(t,new_roots,p);
 	
-			row_print(t,polynoms);//распечатаем таблицу под конец итерации
+//			row_print(t,polynoms);//распечатаем таблицу под конец итерации
 		}
 		return t;
 	}
@@ -493,11 +487,11 @@ namespace Kirill
 		polynoms[l].print();
 		//находим остаток от деления многочленов
 		Polynom rem = divide(polynoms[p],polynoms[l]).first;
-		std::cout<<std::endl;
-		std::cout<<"remainder is ";
-		rem.print();
-		std::cout<<std::endl;
-		std::cout<<"remainder's degree is "<<rem.get_degree()<<std::endl;
+//		std::cout<<std::endl;
+//		std::cout<<"remainder is ";
+//		rem.print();
+//		std::cout<<std::endl;
+//		std::cout<<"remainder's degree is "<<rem.get_degree()<<std::endl;
 	
 		//если остаток это не константа, то ищем остаток в насыщенной системе
 		if(rem.get_degree()>0)
@@ -505,8 +499,8 @@ namespace Kirill
 			for(int j=0;j<t.size();j++)	//итерация по всем многочленам
 				if(polynoms[j]==rem)	//если новый многочлен совпадает с остатком
 				{	
-					std::cout<<"remainder of polynom found in the table"<<std::endl;
-					std::cout<<"sign is "<<t[j][i]<<std::endl;
+//					std::cout<<"remainder of polynom found in the table"<<std::endl;
+//					std::cout<<"sign is "<<t[j][i]<<std::endl;
 					t[p][i]=h*t[j][i];//копируем знак из остатка, нужно учесть знак при делении
 				}
 		}
@@ -515,12 +509,12 @@ namespace Kirill
 		{
 			if(rem.get_coefficients()[0]==0)//если остаток ноль, то точка-корень многочлена
 			{
-				std::cout<<"Remainder is 0, point is root of polynom"<<std::endl;
+//				std::cout<<"Remainder is 0, point is root of polynom"<<std::endl;
 				t[p][i]=0;
 			}
 			if(rem.get_coefficients()[0]!=0)//если остаток ненулевое число, то копируем его знак
 			{
-				std::cout<<"Remainder is "<<rem.get_coefficients()[0]<<std::endl;
+//				std::cout<<"Remainder is "<<rem.get_coefficients()[0]<<std::endl;
 				mpz_class remnant_coeff_sign=rem.get_coefficients()[0]/abs(rem.get_coefficients()[0]);
 				mpz_class modified_elder_coeff_sign=remnant_coeff_sign*h;
 				t[p][i]=(int)modified_elder_coeff_sign.get_d();
