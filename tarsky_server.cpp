@@ -96,21 +96,36 @@ namespace Kirill
 	{
 		//для записи полученных от клиентов значений нужны буферы
 		char buffer[1024];
+		int div = (right_down_y - left_up_y) / fd.size();
+		int mod = (right_down_y - left_up_y) / fd.size();
 
 		//обход по всем клиентам
         	for(int fdIter = 0; fdIter < fd.size(); ++fdIter)
         	{
                 	//рассылка таблицы по всем клиентам
                         //таблица отправляется по столбцам
+
  	                for(int columnIter = left_up_x; columnIter < right_down_x; ++columnIter)
                         {
-                        	for(int rowIter = left_up_y; rowIter < right_down_y; ++rowIter)
-                                {
-//					memset(buffer, 0, 1024);
-                	                std::string tmp = std::to_string(Polynom_graph[columnIter][rowIter]);
-                                        send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
-					recv(fd[fdIter], buffer, 1024, 0);
-                                }
+				if(fdIter == fd.size() - 1)
+				{
+					for(int rowIter = left_up_y + fdIter*div; rowIter < right_down_y; ++rowIter)
+					{
+						std::string tmp = std::to_string(Polynom_graph[columnIter][rowIter]);
+						send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
+						recv(fd[fdIter], buffer, 1024, 0);
+					}
+				}
+				else
+				{
+                        		for(int rowIter = left_up_y + fdIter*div; rowIter < (fdIter+1)*div; ++rowIter)
+                                	{
+//						memset(buffer, 0, 1024);
+                	                	std::string tmp = std::to_string(Polynom_graph[columnIter][rowIter]);
+                                        	send(fd[fdIter], tmp.c_str(), tmp.size(), 0);
+						recv(fd[fdIter], buffer, 1024, 0);
+                                	}
+				}
 //				memset(buffer, 0, 1024);
 				send(fd[fdIter], "finish\0", 7, 0);
 				recv(fd[fdIter], buffer, 1024, 0);
@@ -137,7 +152,6 @@ namespace Kirill
 				recv(fd[fdIter], buffer, 1024, 0);
 			}
 			send(fd[fdIter], "end\0", 4, 0);
-
                 }
 
 		//сервер должен получить от всех серверов сообщение 

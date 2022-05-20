@@ -12,10 +12,10 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 
-#define LOCAL_PORT 5528
+#define LOCAL_PORT 5533
 #define LOCAL_ADDR INADDR_ANY
 #define CONNECT_TIMEOUT 10
-#define CLIENTS_NUM 1
+#define CLIENTS_NUM 2
 
 int main()
 {

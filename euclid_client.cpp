@@ -7,8 +7,9 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <iostream>
+#include <stdexcept>
 
-#define LOCAL_PORT 5528
+#define LOCAL_PORT 5533
 #define LOCAL_ADDR INADDR_ANY
 
 int main()
@@ -21,8 +22,7 @@ int main()
         sock = socket(AF_INET, SOCK_STREAM, 0);
         if(sock < 0)
         {
-                perror("error while creating socket");
-                exit(1);
+		throw std::runtime_error("Error while creating socket");
         }
         addr.sin_family = AF_INET;
         addr.sin_port = htons(LOCAL_PORT);
@@ -31,11 +31,12 @@ int main()
         //соединение с сервером
         if(connect(sock, (struct sockaddr*)&addr, sizeof(addr)) < 0)
         {
-                perror("error while connecting");
-                exit(2);
+                throw std::runtime_error("Error while connecting");
         }
+	std::cout << "Socket is connected to server" << std::endl;
 
         //работа с сервером
+	std::cout << "Client is ready to calculate!" << std::endl;
 	Kirill::calculate(sock);	
 
 	//завершение работы

@@ -22,17 +22,13 @@ namespace Kirill
 		//клиент повторяет цикл вычислений
 		while(true)
 		{
-			std::cout << "a" << std::endl;
-
 			//получение таблицы от сервера
 			std::vector<std::vector<int>> table;
 			std::vector<int> column;
 			while(true)
 			{
 				memset(buffer, 0, 1024);
-				std::cout << "b" << std::endl;
 				int bytesRead = recv(sock, buffer, 1024, 0);
-				std::cout << buffer << std::endl;
 				if(bytesRead <= 0)
 				{
 					break;
@@ -40,7 +36,6 @@ namespace Kirill
 
 				if(!strcmp(buffer, "finish"))
 				{
-					std::cout << "added column" << std::endl;
 					if(!column.empty())
 					{
 						table.push_back(column);
@@ -62,7 +57,7 @@ namespace Kirill
 				}
 				send(sock, "ready\0", 6, 0);
 			}
-			std::cout << "got table" << std::endl;
+//			std::cout << "got table" << std::endl;
 			send(sock, "ready\0", 6, 0);
 
 			//получение вектора многочленов от сервера
@@ -71,7 +66,6 @@ namespace Kirill
 			{
 				memset(buffer, 0, 1024);
 				int bytesRead = recv(sock, buffer, 1024, 0);
-				std::cout << buffer << std::endl;
 				if(bytesRead <= 0)
 				{
 					break;
@@ -79,7 +73,6 @@ namespace Kirill
 
 				if(!strcmp(buffer, "finish"))
 				{
-					std::cout << "added polynom" << std::endl;
 					if(!coefs.empty())
 					{
 						Polynom tmpPoly(coefs);
@@ -103,7 +96,7 @@ namespace Kirill
 				}
 				send(sock, "ready\0", 6, 0);
 			}
-			std::cout << "got polynoms" << std::endl;
+//			std::cout << "got polynoms" << std::endl;
 
 			//запуск насыщения системы
 			std::vector<Polynom> saturated = part_polynom_matrix_calculation(table, unsaturated, sock);
@@ -124,8 +117,8 @@ namespace Kirill
 				recv(sock, buffer, 1024, 0);
 			}
 			send(sock, "end\0", 4, 0);
-			recv(sock, buffer, 1024, 0);
-			std::cout << "sent" << std::endl;
+			int bytesRead = recv(sock, buffer, 1024, 0);
+//			std::cout << "sent" << std::endl;
 		}
 	}
 
