@@ -335,7 +335,28 @@ namespace Dima
 						break;
 					case IDENTIFIER:
 						bufUncov.push_back(new Node(1, IDENTIFIER));
-						bufUncov.push_back(new Node(0, MULT_TMP));
+						bufUncov.push_back(new Node(0, DEGREE));
+						break;
+					default:
+						return 0;
+						break;
+				}
+				break;
+			case DEGREE:
+				flag = 1;
+				switch(Term.getType())
+				{
+					case END:
+					case RBRAC:
+					case CONJUNCT:
+					case GREATER:
+					case EQUAL:
+					case PLUS:
+						bufUncov.push_back(new Node(1, EPSILON));
+						break;
+					case POWER:
+						bufUncov.push_back(new Node(1, POWER));
+						bufUncov.push_back(new Node(0, CONST));
 						break;
 					default:
 						return 0;
@@ -413,17 +434,25 @@ namespace Dima
 			{
 				case INTEGER_LITERAL:
 //					std::cout << "It's integer: " << std::stoi(fromNode->getText()) << std::endl;
-					_curCoefficient = std::stoi(fromNode->getText());
+					if(_degreeFlag)
+					{
+						_degree = std::stoi(fromNode->getText());
+					}
+					else
+					{
+						_curCoefficient = std::stoi(fromNode->getText());
+					}
 					break;
-				case IDENTIFIER:
+				case POWER:
 //					std::cout << "It's x" << std::endl;
-					++_degree;
+					_degreeFlag = true;
 					break;
 				case PLUS:
 //					std::cout << "It's +" << std::endl;
 					if(!_leftFlag){_leftPolynomCoefs.push_back(std::make_pair(_curCoefficient, _degree));}
 					else{_rightPolynomCoefs.push_back(std::make_pair(_curCoefficient, _degree));}
 					_degree = 0;
+					_degreeFlag = false;
 					_curCoefficient = 1;
 					break;
 				case GREATER:
@@ -431,6 +460,7 @@ namespace Dima
 //					std::cout << "Left completed" << std::endl;
 					_leftPolynomCoefs.push_back(std::make_pair(_curCoefficient, _degree));
 					_degree = 0;
+					_degreeFlag = false;
 					_curCoefficient = 1;
 					_leftFlag = true;
 					break;

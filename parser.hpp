@@ -49,6 +49,7 @@ namespace Dima
 			std::vector<mpz_class> _resultCoefs;
 
 			bool _negFlag{false};
+			bool _degreeFlag{false};
 			int _degree{0};
 			mpz_class _curCoefficient{1};
 			bool _leftFlag{false}; //если левый многочлен записан
