@@ -9,7 +9,7 @@
 #include <iostream>
 #include <stdexcept>
 
-#define LOCAL_PORT 5533
+#define LOCAL_PORT 5534
 #define LOCAL_ADDR INADDR_ANY
 
 int main()

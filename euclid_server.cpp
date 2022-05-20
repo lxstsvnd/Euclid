@@ -12,14 +12,20 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 
-#define LOCAL_PORT 5533
+#define LOCAL_PORT 5534
 #define LOCAL_ADDR INADDR_ANY
 #define CONNECT_TIMEOUT 10
-#define CLIENTS_NUM 2
 
-int main()
+int main(int argc, char* argv[])
 {
         //подготовка к работе сервера
+	int CLIENTS_NUM;
+	if (argc == 1)
+	{
+		throw std::runtime_error("Error: that's not a single-computer version");
+	}
+	CLIENTS_NUM = std::atoi(argv[1]);
+
 	int sockListener;
         char message[] = "Hello, World!\n";
         char buffer[sizeof(message)];
@@ -29,7 +35,6 @@ int main()
         {
                 throw std::runtime_error("Error while building listener");
         }
-//        fcntl(sockListener, F_SETFL, O_NONBLOCK);
 
         //заполнение полей адреса и привязка неблокирующего слушающего сокета
         addr.sin_family = AF_INET;
@@ -72,7 +77,10 @@ int main()
 
 	//вычисления
 	std::cout<<"\n\n"<<std::endl;
+	int start_time=clock();
 	std::cout<<dnf.decide(fd, sockListener)<<std::endl;
+	int time = clock()-start_time;
+	std::cout<< "time: " << (double)time / CLOCKS_PER_SEC << std::endl;
 
 	//завершение работы сервера
 	for(int iter = 0; iter < fd.size(); ++iter)

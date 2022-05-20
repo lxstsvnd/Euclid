@@ -150,14 +150,14 @@ namespace Kirill
 		int table_wideness=table[0].size();	//Ширина таблицы
 
 		//debug line
-		std::cout<<"Printing extracted table:"<<std::endl;
-		for(auto polynom_string : table)
-		{
-			for(auto integer : polynom_string)
-				std::cout<<integer<<" ";
-			std::cout<<std::endl;
-		}	
-		std::cout<<"Table printed"<<std::endl;
+//		std::cout<<"Printing extracted table:"<<std::endl;
+//		for(auto polynom_string : table)
+//		{
+//			for(auto integer : polynom_string)
+//				std::cout<<integer<<" ";
+//			std::cout<<std::endl;
+//		}	
+//		std::cout<<"Table printed"<<std::endl;
 		//debug line
 
 		//Итерация по всем точкам и промежуткам
